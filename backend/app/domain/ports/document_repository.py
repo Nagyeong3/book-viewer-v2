@@ -1,0 +1,13 @@
+from typing import Protocol
+
+from app.domain.models.viewer import ContentItem, Document
+
+
+class DocumentRepository(Protocol):
+    async def list_documents(self) -> list[Document]: ...
+
+    async def get_document(self, document_id: int) -> Document | None: ...
+
+    async def list_contents(self, document_id: int) -> list[ContentItem]: ...
+
+    async def get_content(self, document_id: int, content_id: int) -> ContentItem | None: ...
