@@ -7,6 +7,12 @@ from app.domain.models.search import IndexSourceContent
 from app.infrastructure.postgres.pool import PostgresPool
 
 
+DOCUMENT_IDS_QUERY = """
+SELECT id
+FROM documents
+ORDER BY id
+"""
+
 INDEX_SOURCE_QUERY = """
 SELECT
     c.id,
@@ -34,6 +40,10 @@ ORDER BY c.origin_order_index NULLS LAST, c.id
 class PostgresIndexSourceRepository:
     def __init__(self, pool: PostgresPool) -> None:
         self._pool = pool
+
+    async def list_document_ids(self) -> list[int]:
+        rows = await self._pool.fetch(DOCUMENT_IDS_QUERY)
+        return [int(row["id"]) for row in rows]
 
     async def list_document_contents(self, document_id: int) -> list[IndexSourceContent]:
         rows = await self._pool.fetch(INDEX_SOURCE_QUERY, document_id)
