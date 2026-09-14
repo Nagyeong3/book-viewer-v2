@@ -33,7 +33,7 @@ class DocumentIndexingPipeline:
 
     async def index_document(self, document_id: int) -> IndexingReport:
         chunks = await self._indexing_service.build_document_chunks(document_id)
-        vectors: list[list[float]] = []
+        indexed_total = 0
 
         for start in range(0, len(chunks), self._batch_size):
             batch = chunks[start : start + self._batch_size]
@@ -50,15 +50,16 @@ class DocumentIndexingPipeline:
                         f"Embedding dimension mismatch: expected {self._vector_dimensions}, "
                         f"got {len(vector)}"
                     )
-            vectors.extend(embedded)
 
-        indexed = await self._index_writer.bulk_index(chunks, vectors)
-        if indexed != len(chunks):
-            raise RuntimeError(
-                f"Index writer count mismatch: expected {len(chunks)}, got {indexed}"
-            )
+            indexed = await self._index_writer.bulk_index(batch, embedded)
+            if indexed != len(batch):
+                raise RuntimeError(
+                    f"Index writer count mismatch: expected {len(batch)}, got {indexed}"
+                )
+            indexed_total += indexed
+
         return IndexingReport(
             document_id=document_id,
             generated_chunks=len(chunks),
-            indexed_chunks=indexed,
+            indexed_chunks=indexed_total,
         )
