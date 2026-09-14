@@ -58,6 +58,17 @@ async def test_bulk_writer_uses_deterministic_ids_and_ndjson():
 
 
 @pytest.mark.asyncio
+async def test_count_all_uses_physical_index_count_endpoint():
+    client = FakeClient()
+    writer = ElasticsearchDocumentIndex(client, index_name="rag-documents-v2")
+
+    count = await writer.count_all()
+
+    assert count == 2
+    assert client.calls[0][:2] == ("GET", "/rag-documents-v2/_count")
+
+
+@pytest.mark.asyncio
 async def test_count_document_uses_document_filter():
     client = FakeClient()
     writer = ElasticsearchDocumentIndex(client, index_name="rag-documents-v1")
