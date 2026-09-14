@@ -69,6 +69,12 @@ class ElasticsearchDocumentIndex:
             )
         return len(chunks)
 
+    async def count_all(self) -> int:
+        result = await self._client.request("GET", f"/{self._index_name}/_count")
+        if not isinstance(result, dict) or "count" not in result:
+            raise ElasticsearchError("Unexpected count response")
+        return int(result["count"])
+
     async def count_document(self, document_id: int) -> int:
         result = await self._client.request(
             "POST",
