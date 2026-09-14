@@ -84,3 +84,34 @@ class ElasticsearchDocumentIndex:
         if not isinstance(result, dict) or "count" not in result:
             raise ElasticsearchError("Unexpected count response")
         return int(result["count"])
+
+    async def delete_stale_document_chunks(
+        self,
+        document_id: int,
+        current_content_ids: list[int],
+    ) -> int:
+        filters: list[dict[str, object]] = [
+            {"term": {"document_id": document_id}}
+        ]
+        query: dict[str, object]
+        if current_content_ids:
+            query = {
+                "bool": {
+                    "filter": filters,
+                    "must_not": [
+                        {"terms": {"content_id": current_content_ids}}
+                    ],
+                }
+            }
+        else:
+            query = {"bool": {"filter": filters}}
+
+        result = await self._client.request(
+            "POST",
+            f"/{self._index_name}/_delete_by_query",
+            params={"refresh": "true", "conflicts": "proceed"},
+            json={"query": query},
+        )
+        if not isinstance(result, dict) or "deleted" not in result:
+            raise ElasticsearchError("Unexpected delete-by-query response")
+        return int(result["deleted"])
