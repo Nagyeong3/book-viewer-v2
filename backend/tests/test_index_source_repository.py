@@ -9,6 +9,8 @@ class FakePool:
 
     async def fetch(self, query, *args):
         self.calls.append((query, args))
+        if "FROM documents" in query and "FROM contents" not in query:
+            return [{"id": 1}, {"id": 21}, {"id": 104}]
         return [
             {
                 "id": 36347,
@@ -28,6 +30,19 @@ class FakePool:
                 "y_max": 200,
             }
         ]
+
+
+@pytest.mark.asyncio
+async def test_repository_lists_document_ids_in_database_order():
+    pool = FakePool()
+    document_ids = await PostgresIndexSourceRepository(pool).list_document_ids()
+
+    assert document_ids == [1, 21, 104]
+    query, args = pool.calls[0]
+    assert args == ()
+    assert "SELECT id" in query
+    assert "FROM documents" in query
+    assert "ORDER BY id" in query
 
 
 @pytest.mark.asyncio
