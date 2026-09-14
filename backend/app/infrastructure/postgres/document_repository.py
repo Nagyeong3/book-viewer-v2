@@ -8,12 +8,12 @@ from app.infrastructure.postgres.pool import PostgresPool
 DOCUMENT_COLUMNS = "id, name AS title"
 CONTENT_COLUMNS = """
     id,
-    documnet_id AS document_id,
+    document_id,
     text,
     type,
     level AS doc_level,
     parent_id,
-    orgin_order_index AS origin_order_index,
+    origin_order_index,
     page,
     cropped_image_path,
     x_min AS xmin,
@@ -42,8 +42,8 @@ class PostgresDocumentRepository:
         rows = await self._pool.fetch(
             f"""SELECT {CONTENT_COLUMNS}
                 FROM contents
-                WHERE documnet_id = $1
-                ORDER BY orgin_order_index NULLS LAST, id""",
+                WHERE document_id = $1
+                ORDER BY origin_order_index NULLS LAST, id""",
             document_id,
         )
         return [self._content(row) for row in rows]
@@ -52,7 +52,7 @@ class PostgresDocumentRepository:
         row = await self._pool.fetchrow(
             f"""SELECT {CONTENT_COLUMNS}
                 FROM contents
-                WHERE documnet_id = $1 AND id = $2""",
+                WHERE document_id = $1 AND id = $2""",
             document_id,
             content_id,
         )
