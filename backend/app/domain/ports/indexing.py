@@ -6,6 +6,9 @@ from app.domain.models.search import IndexSourceContent, SearchChunk
 
 
 class IndexSourceRepository(Protocol):
+    async def list_document_ids(self) -> list[int]:
+        ...
+
     async def list_document_contents(self, document_id: int) -> list[IndexSourceContent]:
         ...
 
