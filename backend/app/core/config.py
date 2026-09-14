@@ -30,7 +30,11 @@ class Settings(BaseSettings):
     embedding_provider: str = "vllm"
     embedding_base_url: str | None = None
     embedding_model: str = "bge-m3"
+    embedding_api_key: str | None = None
     embedding_dimensions: int = Field(default=1024, ge=1)
+    embedding_timeout: float = Field(default=60.0, gt=0, le=600)
+    embedding_max_retries: int = Field(default=3, ge=1, le=10)
+    embedding_retry_backoff_factor: float = Field(default=1.5, gt=0, le=60)
 
     llm_provider: str = "litellm"
     litellm_base_url: str | None = None
@@ -51,6 +55,7 @@ class Settings(BaseSettings):
         "elasticsearch_username",
         "elasticsearch_password",
         "embedding_base_url",
+        "embedding_api_key",
         "litellm_base_url",
         "litellm_api_key",
     )
