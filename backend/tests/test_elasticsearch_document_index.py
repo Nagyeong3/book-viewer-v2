@@ -14,6 +14,8 @@ class FakeClient:
         self.calls.append((method, path, kwargs))
         if path.endswith("/_count"):
             return {"count": 2}
+        if path.endswith("/_delete_by_query"):
+            return {"deleted": 3}
         return {"errors": False, "items": []}
 
 
@@ -77,3 +79,36 @@ async def test_count_document_uses_document_filter():
 
     assert count == 2
     assert client.calls[0][2]["json"] == {"query": {"term": {"document_id": 21}}}
+
+
+@pytest.mark.asyncio
+async def test_delete_stale_chunks_keeps_current_content_ids():
+    client = FakeClient()
+    writer = ElasticsearchDocumentIndex(client, index_name="rag-documents-v3")
+
+    deleted = await writer.delete_stale_document_chunks(21, [100, 101])
+
+    assert deleted == 3
+    method, path, kwargs = client.calls[0]
+    assert (method, path) == ("POST", "/rag-documents-v3/_delete_by_query")
+    assert kwargs["params"] == {"refresh": "true", "conflicts": "proceed"}
+    assert kwargs["json"] == {
+        "query": {
+            "bool": {
+                "filter": [{"term": {"document_id": 21}}],
+                "must_not": [{"terms": {"content_id": [100, 101]}}],
+            }
+        }
+    }
+
+
+@pytest.mark.asyncio
+async def test_delete_stale_chunks_deletes_all_when_document_has_no_current_chunks():
+    client = FakeClient()
+    writer = ElasticsearchDocumentIndex(client, index_name="rag-documents-v3")
+
+    await writer.delete_stale_document_chunks(21, [])
+
+    assert client.calls[0][2]["json"] == {
+        "query": {"bool": {"filter": [{"term": {"document_id": 21}}]}}
+    }
