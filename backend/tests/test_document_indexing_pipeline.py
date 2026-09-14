@@ -65,7 +65,7 @@ class FakeWriter:
 
 
 @pytest.mark.asyncio
-async def test_pipeline_embeds_in_batches_and_indexes_all_chunks():
+async def test_pipeline_embeds_and_indexes_in_same_batches():
     embedder = FakeEmbeddingProvider(dimensions=4)
     writer = FakeWriter()
     pipeline = DocumentIndexingPipeline(
@@ -81,17 +81,22 @@ async def test_pipeline_embeds_in_batches_and_indexes_all_chunks():
     assert report.generated_chunks == 2
     assert report.indexed_chunks == 2
     assert len(embedder.calls) == 2
-    assert writer.calls[0][0][1].embedding_text == "제1장\n본문"
+    assert len(writer.calls) == 2
+    assert all(len(chunks) == 1 for chunks, _ in writer.calls)
+    assert writer.calls[1][0][0].embedding_text == "제1장\n본문"
 
 
 @pytest.mark.asyncio
-async def test_pipeline_rejects_wrong_embedding_dimensions():
+async def test_pipeline_rejects_wrong_embedding_dimensions_before_indexing():
+    writer = FakeWriter()
     pipeline = DocumentIndexingPipeline(
         IndexingService(SourceRepository()),
         FakeEmbeddingProvider(dimensions=3),
-        FakeWriter(),
+        writer,
         vector_dimensions=4,
     )
 
     with pytest.raises(RuntimeError, match="dimension mismatch"):
         await pipeline.index_document(21)
+
+    assert writer.calls == []
