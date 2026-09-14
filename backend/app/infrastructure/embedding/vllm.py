@@ -20,6 +20,7 @@ class VLLMEmbeddingProvider:
         timeout: float = 60.0,
         max_retries: int = 3,
         retry_backoff_factor: float = 1.5,
+        transport: httpx.AsyncBaseTransport | None = None,
     ) -> None:
         if max_retries < 1:
             raise ValueError("max_retries must be >= 1")
@@ -34,6 +35,7 @@ class VLLMEmbeddingProvider:
                 "Content-Type": "application/json",
                 "Authorization": f"Bearer {api_key}",
             },
+            transport=transport,
         )
 
     async def close(self) -> None:
