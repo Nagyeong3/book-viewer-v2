@@ -36,11 +36,11 @@ async def test_repository_maps_document_and_content() -> None:
     assert contents[0].bbox.xmax == 10.0
     query, args = pool.calls[-1]
     assert args == (1,)
-    assert "documnet_id AS document_id" in query
+    assert "document_id" in query
     assert "level AS doc_level" in query
-    assert "orgin_order_index AS origin_order_index" in query
+    assert "origin_order_index" in query
     assert "x_min AS xmin" in query
-    assert "WHERE documnet_id = $1" in query
+    assert "WHERE document_id = $1" in query
 
 
 @pytest.mark.asyncio
@@ -49,4 +49,4 @@ async def test_get_content_enforces_document_scope() -> None:
     repo = PostgresDocumentRepository(pool)
     await repo.get_content(5, 7)
     assert pool.calls[-1][1] == (5, 7)
-    assert "documnet_id = $1 AND id = $2" in pool.calls[-1][0]
+    assert "document_id = $1 AND id = $2" in pool.calls[-1][0]
