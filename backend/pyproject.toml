@@ -1,6 +1,6 @@
 [project]
 name = "book-viewer-v2-backend"
-version = "0.3.0"
+version = "0.5.0"
 requires-python = ">=3.10,<3.13"
 dependencies = [
   "asyncpg>=0.30,<1",
