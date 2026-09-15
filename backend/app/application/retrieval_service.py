@@ -72,6 +72,24 @@ class RetrievalService:
         )
         return self._fuse(keyword_hits, vector_hits, top_k=top_k)
 
+    async def title_search(
+        self,
+        query: str,
+        document_ids: list[int],
+        *,
+        top_k: int = 8,
+    ) -> list[RetrievedChunk]:
+        if not query.strip():
+            raise ValueError("query must not be empty")
+        if not document_ids:
+            raise ValueError("document_ids must not be empty")
+        return await self._repository.keyword_search(
+            query,
+            document_ids,
+            top_k=top_k,
+            title_boost=max(self._title_boost * 3.0, 6.0),
+        )
+
     def _fuse(
         self,
         keyword_hits: list[RetrievedChunk],
