@@ -1,6 +1,11 @@
 from __future__ import annotations
 
+import json
+from collections.abc import AsyncIterator
+from dataclasses import asdict
+
 from fastapi import APIRouter, Depends
+from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field, field_validator
 
 from app.application.rag_service import RagService
@@ -42,6 +47,10 @@ class RagQueryResponse(BaseModel):
     sources: list[RagSourceResponse]
 
 
+def _sse(event: str, data: object) -> str:
+    return f"event: {event}\ndata: {json.dumps(data, ensure_ascii=False)}\n\n"
+
+
 @router.post("/query", response_model=RagQueryResponse)
 async def query_rag(
     payload: RagQueryRequest,
@@ -70,4 +79,28 @@ async def query_rag(
             )
             for source in result.sources
         ],
+    )
+
+
+@router.post("/stream")
+async def stream_rag(
+    payload: RagQueryRequest,
+    service: RagService = Depends(get_rag_service),
+) -> StreamingResponse:
+    async def events() -> AsyncIterator[str]:
+        async for event, data in service.stream_answer(
+            payload.question,
+            payload.document_ids,
+            mode=payload.mode,
+            top_k=payload.top_k,
+        ):
+            if event == "sources":
+                yield _sse("sources", [asdict(source) for source in data])
+            else:
+                yield _sse(event, data)
+
+    return StreamingResponse(
+        events(),
+        media_type="text/event-stream",
+        headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
     )
