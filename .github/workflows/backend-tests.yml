@@ -1,4 +1,4 @@
-name: Backend tests
+name: Application tests
 
 on:
   push:
@@ -23,3 +23,22 @@ jobs:
         run: python -m compileall -q backend/app backend/tests backend/scripts
       - name: Run tests
         run: python -m pytest -q
+
+  frontend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - name: Install frontend
+        working-directory: frontend
+        run: npm install --no-audit --no-fund
+      - name: Typecheck frontend
+        working-directory: frontend
+        run: npm run typecheck
+      - name: Build frontend
+        working-directory: frontend
+        env:
+          NEXT_PUBLIC_API_BASE_URL: http://127.0.0.1:9056
+        run: npm run build
