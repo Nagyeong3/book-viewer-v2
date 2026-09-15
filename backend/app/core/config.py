@@ -46,7 +46,7 @@ class Settings(BaseSettings):
     llm_provider: str = "litellm"
     litellm_base_url: str | None = None
     litellm_api_key: str | None = None
-    llm_model: str = "gpt-oss-120b-vllm"
+    llm_model: str = "gpt-oss120b"
     llm_timeout: float = Field(default=120.0, gt=0, le=1200)
     llm_max_retries: int = Field(default=2, ge=1, le=10)
     llm_retry_backoff_factor: float = Field(default=1.5, gt=0, le=60)
