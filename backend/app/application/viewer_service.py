@@ -35,6 +35,13 @@ class ViewerService:
         numbers = {content.id: content.title_num for content in self._number_contents(contents)}
         return self._to_viewer_content(item, numbers.get(item.id))
 
+    async def get_page_image_path(self, document_id: int, page: int) -> str:
+        await self.get_document(document_id)
+        path = await self._repository.get_page_image_path(document_id, page)
+        if not path:
+            raise AppError("PAGE_IMAGE_NOT_FOUND", f"Page image for document {document_id}, page {page} was not found.", 404)
+        return path
+
     async def get_toc(self, document_id: int) -> list[TocNode]:
         await self.get_document(document_id)
         items = await self._repository.list_contents(document_id)
@@ -96,6 +103,7 @@ class ViewerService:
             cropped_image_path=item.cropped_image_path,
             bbox=item.bbox,
             title_num=title_num,
+            doc_image_path=item.doc_image_path,
         )
 
     @staticmethod
