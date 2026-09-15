@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from collections.abc import AsyncIterator
 from typing import Protocol
 
 from app.domain.models.rag import RetrievedChunk
@@ -34,4 +35,7 @@ class QueryEmbeddingProvider(Protocol):
 
 class LLMProvider(Protocol):
     async def invoke(self, *, system_prompt: str, user_prompt: str) -> str:
+        ...
+
+    def stream(self, *, system_prompt: str, user_prompt: str) -> AsyncIterator[str]:
         ...
