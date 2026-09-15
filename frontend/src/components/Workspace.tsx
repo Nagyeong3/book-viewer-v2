@@ -42,6 +42,71 @@ function TocTree({ nodes, onPick }: { nodes: TocNode[]; onPick: (node: TocNode) 
   );
 }
 
+function PagePreview({
+  documentId,
+  page,
+  contents,
+  focusContentId,
+}: {
+  documentId: number;
+  page: number;
+  contents: ContentItem[];
+  focusContentId: number | null;
+}) {
+  const [natural, setNatural] = useState({ width: 0, height: 0 });
+  const [imageFailed, setImageFailed] = useState(false);
+
+  useEffect(() => {
+    setNatural({ width: 0, height: 0 });
+    setImageFailed(false);
+  }, [documentId, page]);
+
+  const focused = contents.find((item) => item.id === focusContentId && item.bbox) ?? null;
+  const bbox = focused?.bbox;
+  const canHighlight = Boolean(bbox && natural.width > 0 && natural.height > 0);
+
+  return (
+    <div className="page-preview-wrap">
+      <div className="page-preview-toolbar">
+        <strong>원본 페이지 이미지</strong>
+        <span>p.{page}</span>
+      </div>
+      {imageFailed ? (
+        <div className="image-fallback">
+          원본 이미지 파일을 찾지 못했습니다. 아래 구조화 텍스트는 계속 확인할 수 있습니다.
+        </div>
+      ) : (
+        <div className="page-image-stage">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={api.pageImageUrl(documentId, page)}
+            alt={`Document ${documentId} page ${page}`}
+            onLoad={(event) => {
+              setNatural({
+                width: event.currentTarget.naturalWidth,
+                height: event.currentTarget.naturalHeight,
+              });
+            }}
+            onError={() => setImageFailed(true)}
+          />
+          {canHighlight && bbox ? (
+            <div
+              className="bbox-overlay"
+              title={`content #${focused?.id}`}
+              style={{
+                left: `${(bbox.xmin / natural.width) * 100}%`,
+                top: `${(bbox.ymin / natural.height) * 100}%`,
+                width: `${((bbox.xmax - bbox.xmin) / natural.width) * 100}%`,
+                height: `${((bbox.ymax - bbox.ymin) / natural.height) * 100}%`,
+              }}
+            />
+          ) : null}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function ViewerContent({
   contents,
   focusContentId,
@@ -276,7 +341,21 @@ export default function Workspace() {
               </button>
             ) : null}
           </div>
-          {loadingViewer ? <div className="empty-state">문서를 불러오는 중...</div> : <ViewerContent contents={contents} focusContentId={focusContentId} />}
+          <div className="viewer-scroll">
+            {activeDocumentId && activePage ? (
+              <PagePreview
+                documentId={activeDocumentId}
+                page={activePage}
+                contents={contents}
+                focusContentId={focusContentId}
+              />
+            ) : null}
+            {loadingViewer ? (
+              <div className="empty-state">문서를 불러오는 중...</div>
+            ) : (
+              <ViewerContent contents={contents} focusContentId={focusContentId} />
+            )}
+          </div>
         </section>
 
         <aside className="chat-pane panel">
