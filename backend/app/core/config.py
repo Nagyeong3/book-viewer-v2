@@ -14,6 +14,7 @@ class Settings(BaseSettings):
     app_port: int = Field(default=9056, ge=1, le=65535)
     log_level: str = "INFO"
     enable_api_docs: bool = False
+    cors_allowed_origins: str = "http://127.0.0.1:3000,http://localhost:3000"
 
     database_url: str | None = None
     database_min_pool_size: int = Field(default=1, ge=1, le=50)
@@ -52,6 +53,10 @@ class Settings(BaseSettings):
     llm_retry_backoff_factor: float = Field(default=1.5, gt=0, le=60)
     llm_temperature: float = Field(default=0.0, ge=0, le=2)
     llm_max_tokens: int = Field(default=8192, ge=1, le=65536)
+
+    @property
+    def cors_origins(self) -> list[str]:
+        return [item.strip() for item in self.cors_allowed_origins.split(",") if item.strip()]
 
     @field_validator("log_level")
     @classmethod

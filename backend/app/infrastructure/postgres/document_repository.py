@@ -15,6 +15,7 @@ CONTENT_COLUMNS = """
     parent_id,
     origin_order_index,
     page,
+    doc_image_path,
     cropped_image_path,
     x_min AS xmin,
     y_min AS ymin,
@@ -58,6 +59,21 @@ class PostgresDocumentRepository:
         )
         return self._content(row) if row else None
 
+    async def get_page_image_path(self, document_id: int, page: int) -> str | None:
+        row = await self._pool.fetchrow(
+            """SELECT doc_image_path
+               FROM contents
+               WHERE document_id = $1 AND page = $2 AND doc_image_path IS NOT NULL
+               ORDER BY origin_order_index NULLS LAST, id
+               LIMIT 1""",
+            document_id,
+            page,
+        )
+        if not row:
+            return None
+        value = row.get("doc_image_path")
+        return str(value) if value else None
+
     @staticmethod
     def _document(row: Mapping[str, Any]) -> Document:
         return Document(id=int(row["id"]), title=str(row["title"]))
@@ -84,4 +100,5 @@ class PostgresDocumentRepository:
             page=int(row["page"]) if row.get("page") is not None else None,
             cropped_image_path=row.get("cropped_image_path"),
             bbox=bbox,
+            doc_image_path=row.get("doc_image_path"),
         )

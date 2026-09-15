@@ -3,6 +3,7 @@ from collections.abc import AsyncIterator, Awaitable, Callable
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.agent import router as agent_router
 from app.api.errors import register_exception_handlers
@@ -40,10 +41,17 @@ def create_app(
 
     app = FastAPI(
         title=resolved_settings.app_name,
-        version="0.7.0",
+        version="0.9.0",
         lifespan=lifespan,
         docs_url="/docs" if resolved_settings.enable_api_docs else None,
         redoc_url=None,
+    )
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=resolved_settings.cors_origins,
+        allow_credentials=False,
+        allow_methods=["GET", "POST", "OPTIONS"],
+        allow_headers=["Content-Type", "X-Request-ID"],
     )
     register_request_middleware(app)
     register_exception_handlers(app)
