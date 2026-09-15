@@ -21,7 +21,7 @@ async def test_litellm_provider_preserves_v1_base_path_and_payload():
 
     provider = LiteLLMProvider(
         "http://litellm.local:4070/v1",
-        model="gpt-oss-120b-vllm",
+        model="gpt-oss120b",
         api_key="secret",
         max_retries=1,
         transport=httpx.MockTransport(handler),
@@ -33,8 +33,41 @@ async def test_litellm_provider_preserves_v1_base_path_and_payload():
 
     assert result == "정상 응답"
     assert captured["url"] == "http://litellm.local:4070/v1/chat/completions"
-    assert captured["payload"]["model"] == "gpt-oss-120b-vllm"
+    assert captured["payload"]["model"] == "gpt-oss120b"
     assert captured["payload"]["temperature"] == 0.0
     assert captured["payload"]["max_tokens"] == 8192
     assert captured["payload"]["messages"][1] == {"role": "user", "content": "question"}
     assert captured["headers"]["authorization"] == "Bearer secret"
+
+
+@pytest.mark.asyncio
+async def test_litellm_provider_parses_openai_sse_stream():
+    captured = {}
+    body = (
+        'data: {"choices":[{"delta":{"content":"안"}}]}\n\n'
+        'data: {"choices":[{"delta":{"content":"녕"}}]}\n\n'
+        'data: [DONE]\n\n'
+    )
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        captured["payload"] = json.loads(request.content.decode())
+        return httpx.Response(
+            200,
+            text=body,
+            headers={"content-type": "text/event-stream"},
+        )
+
+    provider = LiteLLMProvider(
+        "http://litellm.local:4070/v1",
+        model="gpt-oss120b",
+        api_key="secret",
+        max_retries=1,
+        transport=httpx.MockTransport(handler),
+    )
+    try:
+        tokens = [token async for token in provider.stream(system_prompt="s", user_prompt="u")]
+    finally:
+        await provider.close()
+
+    assert tokens == ["안", "녕"]
+    assert captured["payload"]["stream"] is True
