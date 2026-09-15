@@ -79,18 +79,16 @@ class RetrievalService:
         *,
         top_k: int,
     ) -> list[RetrievedChunk]:
-        keyword_norm = self._normalize(keyword_hits)
-        vector_norm = self._normalize(vector_hits)
         combined: dict[str, RetrievedChunk] = {}
         scores: dict[str, float] = {}
 
-        for hit in keyword_hits:
+        for rank, hit in enumerate(keyword_hits, start=1):
             combined[hit.chunk_id] = hit
-            scores[hit.chunk_id] = scores.get(hit.chunk_id, 0.0) + self._keyword_weight * keyword_norm.get(hit.chunk_id, 0.0)
-        for hit in vector_hits:
+            scores[hit.chunk_id] = scores.get(hit.chunk_id, 0.0) + self._keyword_weight / rank
+        for rank, hit in enumerate(vector_hits, start=1):
             existing = combined.get(hit.chunk_id)
             combined[hit.chunk_id] = existing or hit
-            scores[hit.chunk_id] = scores.get(hit.chunk_id, 0.0) + self._vector_weight * vector_norm.get(hit.chunk_id, 0.0)
+            scores[hit.chunk_id] = scores.get(hit.chunk_id, 0.0) + self._vector_weight / rank
 
         keyword_raw = {hit.chunk_id: hit.score for hit in keyword_hits}
         vector_raw = {hit.chunk_id: hit.score for hit in vector_hits}
@@ -112,13 +110,3 @@ class RetrievalService:
         ]
         fused.sort(key=lambda item: (-item.score, item.document_id, item.content_id))
         return fused[:top_k]
-
-    @staticmethod
-    def _normalize(hits: list[RetrievedChunk]) -> dict[str, float]:
-        if not hits:
-            return {}
-        values = [hit.score for hit in hits]
-        low, high = min(values), max(values)
-        if high == low:
-            return {hit.chunk_id: 1.0 for hit in hits}
-        return {hit.chunk_id: (hit.score - low) / (high - low) for hit in hits}
