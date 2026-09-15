@@ -58,6 +58,11 @@ class LiteLLMProvider:
         for attempt in range(self._max_retries):
             try:
                 response = await self._client.post("chat/completions", json=payload)
+                if 400 <= response.status_code < 500:
+                    body = response.text[:4000]
+                    raise LLMError(
+                        f"LiteLLM rejected request: HTTP {response.status_code}: {body}"
+                    )
                 response.raise_for_status()
                 data: Any = response.json()
                 choices = data.get("choices") if isinstance(data, dict) else None
@@ -68,7 +73,14 @@ class LiteLLMProvider:
                 if not isinstance(content, str) or not content.strip():
                     raise LLMError("LiteLLM response does not contain message content")
                 return content.strip()
-            except (httpx.HTTPError, ValueError, LLMError) as exc:
+            except LLMError as exc:
+                last_error = exc
+                if "rejected request: HTTP 4" in str(exc):
+                    break
+                if attempt == self._max_retries - 1:
+                    break
+                await asyncio.sleep(self._retry_backoff_factor * (2**attempt))
+            except (httpx.HTTPError, ValueError) as exc:
                 last_error = exc
                 if attempt == self._max_retries - 1:
                     break
