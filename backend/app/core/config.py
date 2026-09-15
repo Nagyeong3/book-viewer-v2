@@ -36,10 +36,22 @@ class Settings(BaseSettings):
     embedding_max_retries: int = Field(default=3, ge=1, le=10)
     embedding_retry_backoff_factor: float = Field(default=1.5, gt=0, le=60)
 
+    retrieval_title_boost: float = Field(default=3.0, gt=0, le=20)
+    retrieval_keyword_weight: float = Field(default=0.5, ge=0, le=1)
+    retrieval_vector_weight: float = Field(default=0.5, ge=0, le=1)
+    retrieval_candidate_multiplier: int = Field(default=4, ge=1, le=20)
+    rag_top_k: int = Field(default=8, ge=1, le=50)
+    rag_context_max_chars: int = Field(default=24000, ge=1000, le=200000)
+
     llm_provider: str = "litellm"
     litellm_base_url: str | None = None
     litellm_api_key: str | None = None
-    llm_model: str = "gpt-oss-120b-vllm"
+    llm_model: str = "gpt-oss120b"
+    llm_timeout: float = Field(default=120.0, gt=0, le=1200)
+    llm_max_retries: int = Field(default=2, ge=1, le=10)
+    llm_retry_backoff_factor: float = Field(default=1.5, gt=0, le=60)
+    llm_temperature: float = Field(default=0.0, ge=0, le=2)
+    llm_max_tokens: int = Field(default=8192, ge=1, le=65536)
 
     @field_validator("log_level")
     @classmethod
