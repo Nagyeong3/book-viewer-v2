@@ -1,8 +1,12 @@
+from pathlib import Path
+
 from fastapi import APIRouter, Depends, Query
+from fastapi.responses import FileResponse
 from pydantic import BaseModel, ConfigDict
 
 from app.application.viewer_service import ViewerService
 from app.core.container import get_viewer_service
+from app.core.errors import AppError
 
 router = APIRouter(prefix="/api/documents", tags=["viewer"])
 
@@ -32,6 +36,7 @@ class ContentResponse(BaseModel):
     order_index: int
     page: int | None
     cropped_image_path: str | None
+    doc_image_path: str | None
     bbox: BoundingBoxResponse | None
     title_num: str | None
 
@@ -78,3 +83,15 @@ async def get_content(
     service: ViewerService = Depends(get_viewer_service),
 ):
     return await service.get_content(document_id, content_id)
+
+
+@router.get("/{document_id}/pages/{page}/image")
+async def get_page_image(
+    document_id: int,
+    page: int,
+    service: ViewerService = Depends(get_viewer_service),
+):
+    path = Path(await service.get_page_image_path(document_id, page))
+    if not path.is_file():
+        raise AppError("PAGE_IMAGE_FILE_NOT_FOUND", f"Page image file does not exist: {path}", 404)
+    return FileResponse(path)
