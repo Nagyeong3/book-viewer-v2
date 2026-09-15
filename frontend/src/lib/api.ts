@@ -19,6 +19,7 @@ export type ContentItem = {
   parent_id: number | null;
   order_index: number;
   page: number | null;
+  doc_image_path: string | null;
   cropped_image_path: string | null;
   bbox: { xmin: number; ymin: number; xmax: number; ymax: number } | null;
   title_num: string | null;
@@ -50,7 +51,7 @@ export type StreamHandlers = {
   onDone?: (data: unknown) => void;
 };
 
-const API_BASE = (process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://127.0.0.1:9056").replace(/\/$/, "");
+export const API_BASE = (process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://127.0.0.1:9056").replace(/\/$/, "");
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const response = await fetch(`${API_BASE}${path}`, {
@@ -69,6 +70,7 @@ export const api = {
   getToc: (documentId: number) => request<TocNode[]>(`/api/documents/${documentId}/toc`),
   listContents: (documentId: number, page?: number) =>
     request<ContentItem[]>(`/api/documents/${documentId}/contents${page ? `?page=${page}` : ""}`),
+  pageImageUrl: (documentId: number, page: number) => `${API_BASE}/api/documents/${documentId}/pages/${page}/image`,
 };
 
 function parseSseBlock(block: string): { event: string; data: unknown } | null {
