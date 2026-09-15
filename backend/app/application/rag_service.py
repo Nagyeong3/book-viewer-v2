@@ -1,6 +1,8 @@
 from __future__ import annotations
 
-from app.application.context_builder import ContextBuilder
+from collections.abc import AsyncIterator
+
+from app.application.context_builder import BuiltContext, ContextBuilder
 from app.application.retrieval_service import RetrievalService
 from app.domain.models.rag import RagAnswer, RetrievalMode
 from app.domain.ports.retrieval import LLMProvider
@@ -29,6 +31,30 @@ class RagService:
         self._context_builder = context_builder
         self._default_top_k = default_top_k
 
+    async def prepare(
+        self,
+        question: str,
+        document_ids: list[int],
+        *,
+        mode: RetrievalMode = "hybrid",
+        top_k: int | None = None,
+    ) -> BuiltContext:
+        hits = await self._retrieval_service.search(
+            question,
+            document_ids,
+            mode=mode,
+            top_k=top_k or self._default_top_k,
+        )
+        return self._context_builder.build(hits)
+
+    @staticmethod
+    def _user_prompt(question: str, built: BuiltContext) -> str:
+        return (
+            f"질문:\n{question.strip()}\n\n"
+            f"검색 문맥:\n{built.text}\n\n"
+            "위 문맥만 근거로 한국어로 답변하세요."
+        )
+
     async def answer(
         self,
         question: str,
@@ -37,13 +63,12 @@ class RagService:
         mode: RetrievalMode = "hybrid",
         top_k: int | None = None,
     ) -> RagAnswer:
-        hits = await self._retrieval_service.search(
+        built = await self.prepare(
             question,
             document_ids,
             mode=mode,
-            top_k=top_k or self._default_top_k,
+            top_k=top_k,
         )
-        built = self._context_builder.build(hits)
         if not built.sources:
             return RagAnswer(
                 answer="선택한 문서 범위에서 질문과 관련된 근거를 찾지 못했습니다.",
@@ -51,13 +76,35 @@ class RagService:
                 sources=(),
             )
 
-        user_prompt = (
-            f"질문:\n{question.strip()}\n\n"
-            f"검색 문맥:\n{built.text}\n\n"
-            "위 문맥만 근거로 한국어로 답변하세요."
-        )
         answer = await self._llm_provider.invoke(
             system_prompt=SYSTEM_PROMPT,
-            user_prompt=user_prompt,
+            user_prompt=self._user_prompt(question, built),
         )
         return RagAnswer(answer=answer, mode=mode, sources=built.sources)
+
+    async def stream_answer(
+        self,
+        question: str,
+        document_ids: list[int],
+        *,
+        mode: RetrievalMode = "hybrid",
+        top_k: int | None = None,
+    ) -> AsyncIterator[tuple[str, object]]:
+        built = await self.prepare(
+            question,
+            document_ids,
+            mode=mode,
+            top_k=top_k,
+        )
+        yield "sources", built.sources
+        if not built.sources:
+            yield "token", "선택한 문서 범위에서 질문과 관련된 근거를 찾지 못했습니다."
+            yield "done", {"mode": mode}
+            return
+
+        async for token in self._llm_provider.stream(
+            system_prompt=SYSTEM_PROMPT,
+            user_prompt=self._user_prompt(question, built),
+        ):
+            yield "token", token
+        yield "done", {"mode": mode}

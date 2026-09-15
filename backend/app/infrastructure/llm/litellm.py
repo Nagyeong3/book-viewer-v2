@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import asyncio
+import json
+from collections.abc import AsyncIterator
 from typing import Any
 
 import httpx
@@ -44,8 +46,8 @@ class LiteLLMProvider:
     async def close(self) -> None:
         await self._client.aclose()
 
-    async def invoke(self, *, system_prompt: str, user_prompt: str) -> str:
-        payload = {
+    def _payload(self, system_prompt: str, user_prompt: str, *, stream: bool) -> dict[str, object]:
+        payload: dict[str, object] = {
             "model": self._model,
             "temperature": self._temperature,
             "max_tokens": self._max_tokens,
@@ -54,16 +56,26 @@ class LiteLLMProvider:
                 {"role": "user", "content": user_prompt},
             ],
         }
+        if stream:
+            payload["stream"] = True
+        return payload
+
+    @staticmethod
+    async def _raise_for_status(response: httpx.Response) -> None:
+        if 400 <= response.status_code < 500:
+            body = (await response.aread()).decode(errors="replace")[:4000]
+            raise LLMError(
+                f"LiteLLM rejected request: HTTP {response.status_code}: {body}"
+            )
+        response.raise_for_status()
+
+    async def invoke(self, *, system_prompt: str, user_prompt: str) -> str:
+        payload = self._payload(system_prompt, user_prompt, stream=False)
         last_error: Exception | None = None
         for attempt in range(self._max_retries):
             try:
                 response = await self._client.post("chat/completions", json=payload)
-                if 400 <= response.status_code < 500:
-                    body = response.text[:4000]
-                    raise LLMError(
-                        f"LiteLLM rejected request: HTTP {response.status_code}: {body}"
-                    )
-                response.raise_for_status()
+                await self._raise_for_status(response)
                 data: Any = response.json()
                 choices = data.get("choices") if isinstance(data, dict) else None
                 if not isinstance(choices, list) or not choices:
@@ -77,12 +89,30 @@ class LiteLLMProvider:
                 last_error = exc
                 if "rejected request: HTTP 4" in str(exc):
                     break
-                if attempt == self._max_retries - 1:
-                    break
-                await asyncio.sleep(self._retry_backoff_factor * (2**attempt))
             except (httpx.HTTPError, ValueError) as exc:
                 last_error = exc
-                if attempt == self._max_retries - 1:
-                    break
+            if attempt < self._max_retries - 1:
                 await asyncio.sleep(self._retry_backoff_factor * (2**attempt))
         raise LLMError(f"LiteLLM request failed after retries: {last_error}")
+
+    async def stream(self, *, system_prompt: str, user_prompt: str) -> AsyncIterator[str]:
+        payload = self._payload(system_prompt, user_prompt, stream=True)
+        async with self._client.stream("POST", "chat/completions", json=payload) as response:
+            await self._raise_for_status(response)
+            async for line in response.aiter_lines():
+                if not line.startswith("data:"):
+                    continue
+                data = line[5:].strip()
+                if not data or data == "[DONE]":
+                    continue
+                try:
+                    item: Any = json.loads(data)
+                except ValueError as exc:
+                    raise LLMError(f"Malformed LiteLLM stream event: {data[:500]}") from exc
+                choices = item.get("choices") if isinstance(item, dict) else None
+                if not isinstance(choices, list) or not choices:
+                    continue
+                delta = choices[0].get("delta") if isinstance(choices[0], dict) else None
+                content = delta.get("content") if isinstance(delta, dict) else None
+                if isinstance(content, str) and content:
+                    yield content

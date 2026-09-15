@@ -2,6 +2,7 @@ from dataclasses import dataclass
 
 from fastapi import Request
 
+from app.application.agent_service import AgentService
 from app.application.context_builder import ContextBuilder
 from app.application.rag_service import RagService
 from app.application.retrieval_service import RetrievalService
@@ -25,6 +26,7 @@ class AppContainer:
     llm_provider: LiteLLMProvider | None = None
     retrieval_service: RetrievalService | None = None
     rag_service: RagService | None = None
+    agent_service: AgentService | None = None
 
     @classmethod
     async def start(cls, settings: Settings) -> "AppContainer":
@@ -81,11 +83,18 @@ class AppContainer:
                     max_tokens=settings.llm_max_tokens,
                     retry_backoff_factor=settings.llm_retry_backoff_factor,
                 )
+                context_builder = ContextBuilder(max_chars=settings.rag_context_max_chars)
                 container.llm_provider = llm
                 container.rag_service = RagService(
                     retrieval,
                     llm,
-                    ContextBuilder(max_chars=settings.rag_context_max_chars),
+                    context_builder,
+                    default_top_k=settings.rag_top_k,
+                )
+                container.agent_service = AgentService(
+                    retrieval,
+                    llm,
+                    context_builder,
                     default_top_k=settings.rag_top_k,
                 )
         return container
@@ -127,3 +136,10 @@ def get_rag_service(request: Request) -> RagService:
     if container.rag_service is None:
         raise RuntimeError("RAG service is unavailable because retrieval/LiteLLM is not configured")
     return container.rag_service
+
+
+def get_agent_service(request: Request) -> AgentService:
+    container = get_container(request)
+    if container.agent_service is None:
+        raise RuntimeError("Agent service is unavailable because retrieval/LiteLLM is not configured")
+    return container.agent_service

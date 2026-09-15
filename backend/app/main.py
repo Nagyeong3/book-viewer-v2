@@ -4,6 +4,7 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 
+from app.api.agent import router as agent_router
 from app.api.errors import register_exception_handlers
 from app.api.health import router as health_router
 from app.api.middleware import register_request_middleware
@@ -39,7 +40,7 @@ def create_app(
 
     app = FastAPI(
         title=resolved_settings.app_name,
-        version="0.5.0",
+        version="0.7.0",
         lifespan=lifespan,
         docs_url="/docs" if resolved_settings.enable_api_docs else None,
         redoc_url=None,
@@ -51,6 +52,7 @@ def create_app(
     app.include_router(viewer_router)
     app.include_router(search_router)
     app.include_router(rag_router)
+    app.include_router(agent_router)
     return app
 
 

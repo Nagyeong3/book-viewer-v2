@@ -8,17 +8,15 @@ from fastapi import APIRouter, Depends
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field, field_validator
 
-from app.application.rag_service import RagService
-from app.core.container import get_rag_service
-from app.domain.models.rag import RetrievalMode
+from app.application.agent_service import AgentService
+from app.core.container import get_agent_service
 
-router = APIRouter(prefix="/api/rag", tags=["rag"])
+router = APIRouter(prefix="/api/agent", tags=["agent"])
 
 
-class RagQueryRequest(BaseModel):
+class AgentQueryRequest(BaseModel):
     question: str = Field(min_length=1, max_length=4000)
     document_ids: list[int] = Field(min_length=1, max_length=100)
-    mode: RetrievalMode = "hybrid"
     top_k: int | None = Field(default=None, ge=1, le=50)
 
     @field_validator("document_ids")
@@ -29,7 +27,14 @@ class RagQueryRequest(BaseModel):
         return list(dict.fromkeys(value))
 
 
-class RagSourceResponse(BaseModel):
+class AgentPlanResponse(BaseModel):
+    tool: str
+    query: str
+    top_k: int
+    rationale: str
+
+
+class AgentSourceResponse(BaseModel):
     source_id: str
     chunk_id: str
     document_id: int
@@ -41,32 +46,31 @@ class RagSourceResponse(BaseModel):
     score: float
 
 
-class RagQueryResponse(BaseModel):
+class AgentQueryResponse(BaseModel):
     answer: str
-    mode: RetrievalMode
-    sources: list[RagSourceResponse]
+    plan: AgentPlanResponse
+    sources: list[AgentSourceResponse]
 
 
 def _sse(event: str, data: object) -> str:
     return f"event: {event}\ndata: {json.dumps(data, ensure_ascii=False)}\n\n"
 
 
-@router.post("/query", response_model=RagQueryResponse)
-async def query_rag(
-    payload: RagQueryRequest,
-    service: RagService = Depends(get_rag_service),
+@router.post("/query", response_model=AgentQueryResponse)
+async def query_agent(
+    payload: AgentQueryRequest,
+    service: AgentService = Depends(get_agent_service),
 ):
     result = await service.answer(
         payload.question,
         payload.document_ids,
-        mode=payload.mode,
         top_k=payload.top_k,
     )
-    return RagQueryResponse(
+    return AgentQueryResponse(
         answer=result.answer,
-        mode=result.mode,
+        plan=AgentPlanResponse(**asdict(result.plan)),
         sources=[
-            RagSourceResponse(
+            AgentSourceResponse(
                 source_id=source.source_id,
                 chunk_id=source.chunk_id,
                 document_id=source.document_id,
@@ -83,18 +87,19 @@ async def query_rag(
 
 
 @router.post("/stream")
-async def stream_rag(
-    payload: RagQueryRequest,
-    service: RagService = Depends(get_rag_service),
+async def stream_agent(
+    payload: AgentQueryRequest,
+    service: AgentService = Depends(get_agent_service),
 ) -> StreamingResponse:
     async def events() -> AsyncIterator[str]:
         async for event, data in service.stream_answer(
             payload.question,
             payload.document_ids,
-            mode=payload.mode,
             top_k=payload.top_k,
         ):
-            if event == "sources":
+            if event == "plan":
+                yield _sse("plan", asdict(data))
+            elif event == "sources":
                 yield _sse("sources", [asdict(source) for source in data])
             else:
                 yield _sse(event, data)

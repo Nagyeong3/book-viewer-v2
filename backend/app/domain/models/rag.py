@@ -4,6 +4,7 @@ from dataclasses import dataclass, field
 from typing import Literal
 
 RetrievalMode = Literal["keyword", "vector", "hybrid"]
+AgentToolName = Literal["full_text_search", "vector_search", "hybrid_search", "title_search"]
 
 
 @dataclass(frozen=True, slots=True)
@@ -42,4 +43,19 @@ class RagSource:
 class RagAnswer:
     answer: str
     mode: RetrievalMode
+    sources: tuple[RagSource, ...] = field(default_factory=tuple)
+
+
+@dataclass(frozen=True, slots=True)
+class AgentPlan:
+    tool: AgentToolName
+    query: str
+    top_k: int
+    rationale: str = ""
+
+
+@dataclass(frozen=True, slots=True)
+class AgentAnswer:
+    answer: str
+    plan: AgentPlan
     sources: tuple[RagSource, ...] = field(default_factory=tuple)
