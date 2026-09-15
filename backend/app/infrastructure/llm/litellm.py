@@ -32,7 +32,7 @@ class LiteLLMProvider:
         self._max_tokens = max_tokens
         self._retry_backoff_factor = retry_backoff_factor
         self._client = httpx.AsyncClient(
-            base_url=base_url.rstrip("/"),
+            base_url=base_url.rstrip("/") + "/",
             timeout=timeout,
             headers={
                 "Content-Type": "application/json",
@@ -57,7 +57,7 @@ class LiteLLMProvider:
         last_error: Exception | None = None
         for attempt in range(self._max_retries):
             try:
-                response = await self._client.post("/chat/completions", json=payload)
+                response = await self._client.post("chat/completions", json=payload)
                 response.raise_for_status()
                 data: Any = response.json()
                 choices = data.get("choices") if isinstance(data, dict) else None
