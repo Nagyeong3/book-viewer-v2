@@ -7,6 +7,7 @@ from fastapi import FastAPI
 from app.api.errors import register_exception_handlers
 from app.api.health import router as health_router
 from app.api.middleware import register_request_middleware
+from app.api.rag import router as rag_router
 from app.api.readiness import router as readiness_router
 from app.api.viewer import router as viewer_router
 from app.core.config import Settings, get_settings
@@ -37,7 +38,7 @@ def create_app(
 
     app = FastAPI(
         title=resolved_settings.app_name,
-        version="0.2.0",
+        version="0.5.0",
         lifespan=lifespan,
         docs_url="/docs" if resolved_settings.enable_api_docs else None,
         redoc_url=None,
@@ -47,6 +48,7 @@ def create_app(
     app.include_router(health_router)
     app.include_router(readiness_router)
     app.include_router(viewer_router)
+    app.include_router(rag_router)
     return app
 
 
