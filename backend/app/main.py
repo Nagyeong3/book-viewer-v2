@@ -8,6 +8,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.api.agent import router as agent_router
 from app.api.errors import register_exception_handlers
 from app.api.health import router as health_router
+from app.api.index_management import router as index_management_router
 from app.api.middleware import register_request_middleware
 from app.api.rag import router as rag_router
 from app.api.readiness import router as readiness_router
@@ -41,7 +42,7 @@ def create_app(
 
     app = FastAPI(
         title=resolved_settings.app_name,
-        version="0.9.0",
+        version="0.10.0",
         lifespan=lifespan,
         docs_url="/docs" if resolved_settings.enable_api_docs else None,
         redoc_url=None,
@@ -59,6 +60,7 @@ def create_app(
     app.include_router(readiness_router)
     app.include_router(viewer_router)
     app.include_router(search_router)
+    app.include_router(index_management_router)
     app.include_router(rag_router)
     app.include_router(agent_router)
     return app
