@@ -7,6 +7,7 @@ import "./coordinate-viewer.css";
 import "./workspace-v3.css";
 import "./workspace-v4.css";
 import "./print-v2.css";
+import "./index-management.css";
 
 export const metadata = {
   title: "Book Viewer V2",
