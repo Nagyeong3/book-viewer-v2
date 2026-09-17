@@ -1,6 +1,14 @@
 "use client";
 
-import { FormEvent, PointerEvent as ReactPointerEvent, useEffect, useMemo, useRef, useState } from "react";
+import {
+  createElement,
+  FormEvent,
+  PointerEvent as ReactPointerEvent,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 
 import {
   AgentPlan,
@@ -32,61 +40,172 @@ type LayoutState = {
   chatCollapsed: boolean;
 };
 
+type PageSize = { width: number; height: number };
+
 const LAYOUT_KEY = "book-viewer-layout-v1";
 const CHAT_KEY = "book-viewer-chat-v1";
 const MAX_SAVED_TURNS = 30;
 const clamp = (value: number, min: number, max: number) => Math.min(Math.max(value, min), max);
+const documentPageSizeCache = new Map<number, PageSize>();
 
-function headingTag(level: number | null) {
+function getSafeImageUrl(path: string | null | undefined): string {
+  if (!path) return "";
+  if (path.startsWith("http://") || path.startsWith("https://")) return path;
+  const base = (process.env.NEXT_PUBLIC_SEAWEEDFS_FILER_URL ?? "").replace(/\/$/, "");
+  if (!base) return "";
+  const cleanPath = path.startsWith("/") ? path.slice(1) : path;
+  return `${base}/${cleanPath}`;
+}
+
+function headingTag(level: number | null): "h1" | "h2" | "h3" | "h4" | "h5" | "h6" {
   const normalized = clamp(level ?? 3, 1, 6);
-  return `h${normalized}` as keyof JSX.IntrinsicElements;
+  return `h${normalized}` as "h1" | "h2" | "h3" | "h4" | "h5" | "h6";
+}
+
+function firstPageFromToc(nodes: TocNode[]): number | null {
+  for (const node of nodes) {
+    if (node.page) return node.page;
+    const nested = firstPageFromToc(node.children ?? []);
+    if (nested) return nested;
+  }
+  return null;
 }
 
 function SemanticBlock({ item }: { item: ContentItem }) {
   const text = item.text?.trim();
-  const isHeading = item.content_type === "title" || item.content_type === "sub_title";
-  if (isHeading) {
-    const Tag = headingTag(item.doc_level);
-    return <Tag className={`semantic-heading semantic-heading-${clamp(item.doc_level ?? 3, 1, 6)}`}>{text || "제목"}</Tag>;
+  if (item.content_type === "title" || item.content_type === "sub_title") {
+    return createElement(
+      headingTag(item.doc_level),
+      { className: `semantic-heading semantic-heading-${clamp(item.doc_level ?? 3, 1, 6)}` },
+      text || "제목",
+    );
   }
-  if (item.content_type === "image" || item.content_type === "table") {
-    return <div className={`coordinate-placeholder ${item.content_type}`}>{text || (item.content_type === "image" ? "이미지 영역" : "표 영역")}</div>;
+
+  if (item.content_type === "image") {
+    const src = getSafeImageUrl(item.cropped_image_path);
+    return src ? (
+      // eslint-disable-next-line @next/next/no-img-element
+      <img className="coordinate-cropped-image" src={src} alt={text || `content ${item.id}`} loading="lazy" />
+    ) : (
+      <div className="coordinate-placeholder image">이미지 경로 없음</div>
+    );
   }
+
+  if (item.content_type === "table") {
+    return <div className="coordinate-table">{text || "표"}</div>;
+  }
+
   return <div className="coordinate-text">{text || ""}</div>;
 }
 
-function CoordinatePage({ contents, focusContentId }: { contents: ContentItem[]; focusContentId: number | null }) {
-  const positioned = useMemo(() => contents.filter((item) => item.bbox), [contents]);
-  const bounds = useMemo(() => {
-    const maxX = Math.max(1, ...positioned.map((item) => item.bbox?.xmax ?? 0));
-    const maxY = Math.max(1, ...positioned.map((item) => item.bbox?.ymax ?? 0));
-    return { width: maxX * 1.03, height: maxY * 1.03 };
-  }, [positioned]);
+function useDocumentPageSize(documentId: number | null, referencePage: number | null) {
+  const [pageSize, setPageSize] = useState<PageSize | null>(null);
+  const [pageSizeError, setPageSizeError] = useState("");
 
-  if (!positioned.length) {
-    return <div className="coordinate-empty">이 페이지에는 좌표 데이터가 없습니다.</div>;
+  useEffect(() => {
+    if (!documentId || !referencePage) {
+      setPageSize(null);
+      setPageSizeError("");
+      return;
+    }
+
+    const cached = documentPageSizeCache.get(documentId);
+    if (cached) {
+      setPageSize(cached);
+      setPageSizeError("");
+      return;
+    }
+
+    let cancelled = false;
+    const image = new Image();
+    image.onload = () => {
+      if (cancelled) return;
+      const measured = { width: image.naturalWidth, height: image.naturalHeight };
+      if (!measured.width || !measured.height) {
+        setPageSizeError("문서 페이지 규격을 확인하지 못했습니다.");
+        return;
+      }
+      documentPageSizeCache.set(documentId, measured);
+      setPageSize(measured);
+      setPageSizeError("");
+    };
+    image.onerror = () => {
+      if (!cancelled) setPageSizeError("원본 이미지 1장을 이용한 문서 페이지 규격 확인에 실패했습니다.");
+    };
+    image.src = api.pageImageUrl(documentId, referencePage);
+
+    return () => {
+      cancelled = true;
+      image.onload = null;
+      image.onerror = null;
+    };
+  }, [documentId, referencePage]);
+
+  return { pageSize, pageSizeError };
+}
+
+function CoordinatePage({
+  documentId,
+  page,
+  contents,
+  focusContentId,
+}: {
+  documentId: number;
+  page: number;
+  contents: ContentItem[];
+  focusContentId: number | null;
+}) {
+  const positioned = useMemo(() => contents.filter((item) => item.page === page && item.bbox), [contents, page]);
+  const { pageSize, pageSizeError } = useDocumentPageSize(documentId, page);
+
+  if (!pageSize) {
+    return (
+      <div className="coordinate-page-loading">
+        <strong>페이지 규격 확인 중</strong>
+        <p>{pageSizeError || "이 문서의 원본 이미지 1장만 읽어 페이지 비율을 결정합니다."}</p>
+      </div>
+    );
   }
 
   return (
     <div className="coordinate-page-shell">
-      <div className="coordinate-page" style={{ aspectRatio: `${bounds.width} / ${bounds.height}` }}>
+      <div
+        className={`coordinate-page ${pageSize.width > pageSize.height ? "landscape" : "portrait"}`}
+        style={{ aspectRatio: `${pageSize.width} / ${pageSize.height}` }}
+        data-source-width={pageSize.width}
+        data-source-height={pageSize.height}
+        data-page={page}
+      >
         {positioned.map((item) => {
           const box = item.bbox!;
-          const left = (box.xmin / bounds.width) * 100;
-          const top = (box.ymin / bounds.height) * 100;
-          const width = Math.max(((box.xmax - box.xmin) / bounds.width) * 100, 0.5);
-          const height = Math.max(((box.ymax - box.ymin) / bounds.height) * 100, 0.5);
+          const left = (box.xmin / pageSize.width) * 100;
+          const top = (box.ymin / pageSize.height) * 100;
+          const width = ((box.xmax - box.xmin) / pageSize.width) * 100;
+          const height = ((box.ymax - box.ymin) / pageSize.height) * 100;
+          const isFocused = focusContentId === item.id;
+
           return (
             <div
               key={item.id}
-              className={`coordinate-block ${focusContentId === item.id ? "focused" : ""} type-${item.content_type ?? "unknown"}`}
-              style={{ left: `${left}%`, top: `${top}%`, width: `${width}%`, minHeight: `${height}%` }}
-              title={`content #${item.id}${item.page ? ` · p.${item.page}` : ""}`}
+              id={`content-${item.id}`}
+              className={`coordinate-block type-${item.content_type ?? "unknown"} ${isFocused ? "focused" : ""}`}
+              style={{
+                left: `${left}%`,
+                top: `${top}%`,
+                width: `${Math.max(width, 0.2)}%`,
+                height: `${Math.max(height, 0.2)}%`,
+              }}
+              title={`content #${item.id} · p.${page}`}
             >
               <SemanticBlock item={item} />
             </div>
           );
         })}
+      </div>
+      <div className="coordinate-page-caption">
+        <span>p.{page}</span>
+        <span>{pageSize.width} × {pageSize.height}px 기준</span>
+        <span>{positioned.length}개 영역</span>
       </div>
     </div>
   );
@@ -145,7 +264,7 @@ export default function WorkspaceV2() {
   const [activeDocumentId, setActiveDocumentId] = useState<number | null>(null);
   const [toc, setToc] = useState<TocNode[]>([]);
   const [contents, setContents] = useState<ContentItem[]>([]);
-  const [activePage, setActivePage] = useState<number | undefined>();
+  const [activePage, setActivePage] = useState<number | null>(null);
   const [focusContentId, setFocusContentId] = useState<number | null>(null);
   const [question, setQuestion] = useState("");
   const [mode, setMode] = useState<Mode>("agent");
@@ -195,6 +314,7 @@ export default function WorkspaceV2() {
       if (items.length) {
         setSelectedIds([items[0].id]);
         setActiveDocumentId(items[0].id);
+        setActivePage(null);
       }
     }).catch((error: Error) => setStartupError(error.message));
   }, []);
@@ -202,12 +322,28 @@ export default function WorkspaceV2() {
   useEffect(() => {
     if (!activeDocumentId) return;
     let cancelled = false;
-    setLoadingViewer(true);
-    Promise.all([api.getToc(activeDocumentId), api.listContents(activeDocumentId, activePage)])
-      .then(([tocItems, contentItems]) => {
+    api.getToc(activeDocumentId)
+      .then((tocItems) => {
         if (cancelled) return;
         setToc(tocItems);
-        setContents(contentItems);
+        setActivePage((current) => current ?? firstPageFromToc(tocItems) ?? 1);
+      })
+      .catch((error: Error) => {
+        if (!cancelled) setStartupError(error.message);
+      });
+    return () => { cancelled = true; };
+  }, [activeDocumentId]);
+
+  useEffect(() => {
+    if (!activeDocumentId || !activePage) {
+      setContents([]);
+      return;
+    }
+    let cancelled = false;
+    setLoadingViewer(true);
+    api.listContents(activeDocumentId, activePage)
+      .then((contentItems) => {
+        if (!cancelled) setContents(contentItems);
       })
       .catch((error: Error) => {
         if (!cancelled) setStartupError(error.message);
@@ -218,26 +354,30 @@ export default function WorkspaceV2() {
     return () => { cancelled = true; };
   }, [activeDocumentId, activePage]);
 
-  const activeDocument = useMemo(() => documents.find((document) => document.id === activeDocumentId) ?? null, [documents, activeDocumentId]);
+  const activeDocument = useMemo(
+    () => documents.find((document) => document.id === activeDocumentId) ?? null,
+    [documents, activeDocumentId],
+  );
   const latestTurn = turns.length ? turns[turns.length - 1] : undefined;
 
   function toggleDocument(documentId: number) {
     setSelectedIds((current) => current.includes(documentId)
       ? (current.length === 1 ? current : current.filter((id) => id !== documentId))
       : [...current, documentId]);
+    setActivePage(null);
     setActiveDocumentId(documentId);
-    setActivePage(undefined);
     setFocusContentId(null);
   }
 
   function openSource(source: RagSource) {
     setActiveDocumentId(source.document_id);
-    setActivePage(source.page ?? undefined);
+    setActivePage(source.page ?? null);
     setFocusContentId(source.content_id);
   }
 
   function openToc(node: TocNode) {
-    setActivePage(node.page ?? undefined);
+    const page = node.page ?? firstPageFromToc(node.children ?? []);
+    if (page) setActivePage(page);
     setFocusContentId(node.id);
   }
 
@@ -266,6 +406,7 @@ export default function WorkspaceV2() {
     event.preventDefault();
     const clean = question.trim();
     if (!clean || !selectedIds.length) return;
+
     abortRef.current?.abort();
     const controller = new AbortController();
     abortRef.current = controller;
@@ -320,7 +461,12 @@ export default function WorkspaceV2() {
               {documents.map((document) => {
                 const selected = selectedIds.includes(document.id);
                 return (
-                  <button key={document.id} type="button" className={`document-item ${selected ? "selected" : ""} ${activeDocumentId === document.id ? "active" : ""}`} onClick={() => toggleDocument(document.id)}>
+                  <button
+                    key={document.id}
+                    type="button"
+                    className={`document-item ${selected ? "selected" : ""} ${activeDocumentId === document.id ? "active" : ""}`}
+                    onClick={() => toggleDocument(document.id)}
+                  >
                     <span className="checkbox-mark">{selected ? "✓" : ""}</span>
                     <span><strong>{document.title}</strong><small>Document #{document.id}</small></span>
                   </button>
@@ -328,18 +474,34 @@ export default function WorkspaceV2() {
               })}
             </div>
           </div>
-          <div className="toc-section"><div className="section-label">Document outline</div>{toc.length ? <TocTree nodes={toc} onPick={openToc} /> : <div className="muted">목차 없음</div>}</div>
+          <div className="toc-section">
+            <div className="section-label">Document outline</div>
+            {toc.length ? <TocTree nodes={toc} onPick={openToc} /> : <div className="muted">목차 없음</div>}
+          </div>
         </aside>
 
         <div className={`resize-handle ${layout.tocCollapsed ? "hidden" : ""}`} onPointerDown={(event) => beginResize("toc", event)} />
 
         <section className="viewer-pane panel">
           <div className="panel-heading viewer-heading">
-            <div><h2>{activeDocument?.title ?? "문서 선택"}</h2><p>{activePage ? `페이지 ${activePage}` : "전체 구조화 본문"}{focusContentId ? ` · content #${focusContentId}` : ""}</p></div>
-            {activePage ? <button type="button" className="ghost-button" onClick={() => setActivePage(undefined)}>전체 보기</button> : null}
+            <div>
+              <h2>{activeDocument?.title ?? "문서 선택"}</h2>
+              <p>{activePage ? `페이지 ${activePage}` : "페이지 선택 중"}{focusContentId ? ` · content #${focusContentId}` : ""}</p>
+            </div>
           </div>
-          <div className="viewer-scroll">
-            {loadingViewer ? <div className="empty-state">문서를 불러오는 중...</div> : activePage ? <CoordinatePage contents={contents} focusContentId={focusContentId} /> : <div className="semantic-document semantic-document-full">{contents.map((item) => <article key={item.id} className={`semantic-row ${focusContentId === item.id ? "focused" : ""}`}><div className="content-meta"><span>#{item.id}</span><span>{item.content_type ?? "unknown"}</span>{item.page ? <span>p.{item.page}</span> : null}</div><SemanticBlock item={item} /></article>)}</div>}
+          <div className="viewer-scroll coordinate-viewer-scroll">
+            {loadingViewer ? (
+              <div className="empty-state">문서를 불러오는 중...</div>
+            ) : activeDocumentId && activePage ? (
+              <CoordinatePage
+                documentId={activeDocumentId}
+                page={activePage}
+                contents={contents}
+                focusContentId={focusContentId}
+              />
+            ) : (
+              <div className="empty-state">표시할 페이지를 선택하세요.</div>
+            )}
           </div>
         </section>
 
@@ -356,16 +518,59 @@ export default function WorkspaceV2() {
 
           {assistantTab === "assistant" ? (
             <>
-              <div className="chat-controls"><div className="segmented"><button type="button" className={mode === "agent" ? "active" : ""} onClick={() => setMode("agent")}>Agent</button><button type="button" className={mode === "rag" ? "active" : ""} onClick={() => setMode("rag")}>Hybrid RAG</button></div><label>Top K<select value={topK} onChange={(event) => setTopK(Number(event.target.value))}>{[3, 5, 8, 10].map((value) => <option key={value}>{value}</option>)}</select></label></div>
+              <div className="chat-controls">
+                <div className="segmented">
+                  <button type="button" className={mode === "agent" ? "active" : ""} onClick={() => setMode("agent")}>Agent</button>
+                  <button type="button" className={mode === "rag" ? "active" : ""} onClick={() => setMode("rag")}>Hybrid RAG</button>
+                </div>
+                <label>Top K<select value={topK} onChange={(event) => setTopK(Number(event.target.value))}>{[3, 5, 8, 10].map((value) => <option key={value}>{value}</option>)}</select></label>
+              </div>
               <SourceDock turn={latestTurn} onOpen={openSource} />
               <div className="chat-log">
                 {!turns.length ? <div className="empty-chat"><strong>선택한 문서에 질문하세요.</strong><p>근거 문서를 먼저 보여주고 답변을 스트리밍합니다.</p></div> : null}
-                {turns.map((turn) => <article key={turn.id} className="chat-turn"><div className="user-message">{turn.question}</div><div className="assistant-message"><div className="answer-text">{turn.answer || (turn.pending ? "답변 생성 중..." : "")}{turn.pending ? <span className="cursor" /> : null}</div>{turn.error ? <div className="turn-error">{turn.error}</div> : null}</div></article>)}
+                {turns.map((turn) => (
+                  <article key={turn.id} className="chat-turn">
+                    <div className="user-message">{turn.question}</div>
+                    <div className="assistant-message">
+                      <div className="answer-text">{turn.answer || (turn.pending ? "답변 생성 중..." : "")}{turn.pending ? <span className="cursor" /> : null}</div>
+                      {turn.error ? <div className="turn-error">{turn.error}</div> : null}
+                    </div>
+                  </article>
+                ))}
               </div>
-              <form className="question-form" onSubmit={submitQuestion}><textarea value={question} onChange={(event) => setQuestion(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter" && !event.shiftKey) { event.preventDefault(); event.currentTarget.form?.requestSubmit(); } }} placeholder="선택한 문서에 대해 질문하세요" rows={3} /><div><span>{selectedIds.length}개 문서 범위 · 대화는 이 브라우저에 임시 저장</span><button type="submit" disabled={!question.trim() || !selectedIds.length}>질문 전송</button></div></form>
+              <form className="question-form" onSubmit={submitQuestion}>
+                <textarea
+                  value={question}
+                  onChange={(event) => setQuestion(event.target.value)}
+                  onKeyDown={(event) => {
+                    if (event.key === "Enter" && !event.shiftKey) {
+                      event.preventDefault();
+                      event.currentTarget.form?.requestSubmit();
+                    }
+                  }}
+                  placeholder="선택한 문서에 대해 질문하세요"
+                  rows={3}
+                />
+                <div><span>{selectedIds.length}개 문서 범위 · 대화는 이 브라우저에 임시 저장</span><button type="submit" disabled={!question.trim() || !selectedIds.length}>질문 전송</button></div>
+              </form>
             </>
           ) : (
-            <div className="process-pane">{latestTurn?.plan ? <><div className="process-status">{latestTurn.pending ? "실행 중" : "완료"}</div><dl><div><dt>Tool</dt><dd>{latestTurn.plan.tool}</dd></div><div><dt>Query</dt><dd>{latestTurn.plan.query}</dd></div><div><dt>Top K</dt><dd>{latestTurn.plan.top_k}</dd></div><div><dt>Reason</dt><dd>{latestTurn.plan.rationale || "-"}</dd></div><div><dt>Sources</dt><dd>{latestTurn.sources.length}</dd></div></dl></> : <div className="empty-chat"><strong>아직 Agent 실행 내역이 없습니다.</strong><p>Agent 모드로 질문하면 이 탭에서 계획을 확인할 수 있습니다.</p></div>}</div>
+            <div className="process-pane">
+              {latestTurn?.plan ? (
+                <>
+                  <div className="process-status">{latestTurn.pending ? "실행 중" : "완료"}</div>
+                  <dl>
+                    <div><dt>Tool</dt><dd>{latestTurn.plan.tool}</dd></div>
+                    <div><dt>Query</dt><dd>{latestTurn.plan.query}</dd></div>
+                    <div><dt>Top K</dt><dd>{latestTurn.plan.top_k}</dd></div>
+                    <div><dt>Reason</dt><dd>{latestTurn.plan.rationale || "-"}</dd></div>
+                    <div><dt>Sources</dt><dd>{latestTurn.sources.length}</dd></div>
+                  </dl>
+                </>
+              ) : (
+                <div className="empty-chat"><strong>아직 Agent 실행 내역이 없습니다.</strong><p>Agent 모드로 질문하면 이 탭에서 계획을 확인할 수 있습니다.</p></div>
+              )}
+            </div>
           )}
         </aside>
       </section>
