@@ -1,11 +1,11 @@
 "use client";
 
 import { createElement, useEffect, useMemo, useState } from "react";
+import { createPortal } from "react-dom";
 
 import { api, ContentItem } from "../lib/api";
 import { getSafeImageUrl } from "../lib/seaweed";
 
-const FOCUS_KEY = "book-viewer-focus-mode-v1";
 const DEFAULT_PAGE_SIZE = { width: 1250, height: 1755 };
 
 type PageSize = typeof DEFAULT_PAGE_SIZE;
@@ -15,12 +15,6 @@ type PrintState = {
   contents: ContentItem[];
   pageSize: PageSize;
 } | null;
-
-function isEditableTarget(target: EventTarget | null) {
-  const element = target as HTMLElement | null;
-  if (!element) return false;
-  return element.tagName === "INPUT" || element.tagName === "TEXTAREA" || element.isContentEditable;
-}
 
 function activeDocumentFromDom(): { id: number; title: string } | null {
   const active = document.querySelector<HTMLElement>(".document-item.active");
@@ -126,31 +120,16 @@ async function waitForPrintAssets() {
 }
 
 export default function ProductToolbar() {
-  const [focusMode, setFocusMode] = useState(false);
   const [printState, setPrintState] = useState<PrintState>(null);
   const [printStatus, setPrintStatus] = useState("");
+  const [toolbarTarget, setToolbarTarget] = useState<HTMLElement | null>(null);
 
   useEffect(() => {
-    const stored = window.localStorage.getItem(FOCUS_KEY) === "true";
-    setFocusMode(stored);
-    document.body.classList.toggle("product-focus-mode", stored);
-  }, []);
-
-  useEffect(() => {
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (isEditableTarget(event.target)) return;
-      if (event.key.toLowerCase() === "f" && !event.ctrlKey && !event.metaKey && !event.altKey) {
-        event.preventDefault();
-        setFocusMode((current) => {
-          const next = !current;
-          document.body.classList.toggle("product-focus-mode", next);
-          window.localStorage.setItem(FOCUS_KEY, String(next));
-          return next;
-        });
-      }
-    };
-    window.addEventListener("keydown", onKeyDown);
-    return () => window.removeEventListener("keydown", onKeyDown);
+    const locate = () => setToolbarTarget(document.querySelector<HTMLElement>(".viewer-status"));
+    locate();
+    const observer = new MutationObserver(locate);
+    observer.observe(document.body, { childList: true, subtree: true });
+    return () => observer.disconnect();
   }, []);
 
   useEffect(() => {
@@ -164,19 +143,6 @@ export default function ProductToolbar() {
     });
     return () => { cancelled = true; };
   }, [printState]);
-
-  const toggleFocus = () => {
-    setFocusMode((current) => {
-      const next = !current;
-      document.body.classList.toggle("product-focus-mode", next);
-      window.localStorage.setItem(FOCUS_KEY, String(next));
-      return next;
-    });
-  };
-
-  const scrollTop = () => {
-    document.querySelector<HTMLElement>(".chapter-scroll")?.scrollTo({ top: 0, behavior: "smooth" });
-  };
 
   const printWholeDocument = async () => {
     if (printStatus) return;
@@ -202,22 +168,18 @@ export default function ProductToolbar() {
     <>
       {printState ? <PrintDocument state={printState} /> : null}
       {printStatus ? <div className="print-loading-toast"><span className="loading-spinner" />{printStatus}</div> : null}
-      <nav className="product-utility-bar" aria-label="문서 뷰어 도구">
-        <button type="button" onClick={toggleFocus} aria-pressed={focusMode} title="집중 보기 (F)">
-          <span className="utility-icon" aria-hidden="true">{focusMode ? "◫" : "□"}</span>
-          <span>{focusMode ? "패널 복원" : "집중 보기"}</span>
-          <kbd>F</kbd>
-        </button>
-        <span className="utility-divider" />
-        <button type="button" onClick={scrollTop} title="현재 챕터 상단으로 이동">
-          <span className="utility-icon" aria-hidden="true">↑</span>
-          <span>상단</span>
-        </button>
-        <button type="button" onClick={printWholeDocument} disabled={Boolean(printStatus)} title="현재 선택한 문서 전체를 A4 기준으로 인쇄">
-          <span className="utility-icon" aria-hidden="true">▣</span>
-          <span>전체 인쇄</span>
-        </button>
-      </nav>
+      {toolbarTarget ? createPortal(
+        <button
+          type="button"
+          className="viewer-print-button"
+          onClick={printWholeDocument}
+          disabled={Boolean(printStatus)}
+          title="현재 선택한 문서 전체 인쇄"
+        >
+          인쇄
+        </button>,
+        toolbarTarget,
+      ) : null}
     </>
   );
 }
