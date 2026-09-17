@@ -28,6 +28,9 @@ class Settings(BaseSettings):
     es_document_alias: str = "rag-documents"
     es_maintenance_alias: str = "rag-maintenance"
 
+    seaweedfs_master_url: str | None = None
+    seaweedfs_filer_url: str | None = None
+
     embedding_provider: str = "vllm"
     embedding_base_url: str | None = None
     embedding_model: str = "bge-m3"
@@ -71,6 +74,8 @@ class Settings(BaseSettings):
         "elasticsearch_url",
         "elasticsearch_username",
         "elasticsearch_password",
+        "seaweedfs_master_url",
+        "seaweedfs_filer_url",
         "embedding_base_url",
         "embedding_api_key",
         "litellm_base_url",

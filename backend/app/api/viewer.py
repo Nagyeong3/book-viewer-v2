@@ -1,10 +1,11 @@
-from pathlib import Path
+from urllib.parse import urljoin, urlparse
 
 from fastapi import APIRouter, Depends, Query
-from fastapi.responses import FileResponse
+from fastapi.responses import RedirectResponse
 from pydantic import BaseModel, ConfigDict
 
 from app.application.viewer_service import ViewerService
+from app.core.config import Settings, get_settings
 from app.core.container import get_viewer_service
 from app.core.errors import AppError
 
@@ -52,6 +53,19 @@ class TocNodeResponse(BaseModel):
     children: list["TocNodeResponse"]
 
 
+def _resolve_page_image_url(path: str, filer_url: str | None) -> str:
+    parsed = urlparse(path)
+    if parsed.scheme in {"http", "https"} and parsed.netloc:
+        return path
+    if not filer_url:
+        raise AppError(
+            "SEAWEEDFS_FILER_URL_NOT_CONFIGURED",
+            "SEAWEEDFS_FILER_URL is required to resolve document image paths.",
+            500,
+        )
+    return urljoin(filer_url.rstrip("/") + "/", path.lstrip("/"))
+
+
 @router.get("", response_model=list[DocumentResponse])
 async def list_documents(service: ViewerService = Depends(get_viewer_service)):
     return await service.list_documents()
@@ -90,8 +104,8 @@ async def get_page_image(
     document_id: int,
     page: int,
     service: ViewerService = Depends(get_viewer_service),
+    settings: Settings = Depends(get_settings),
 ):
-    path = Path(await service.get_page_image_path(document_id, page))
-    if not path.is_file():
-        raise AppError("PAGE_IMAGE_FILE_NOT_FOUND", f"Page image file does not exist: {path}", 404)
-    return FileResponse(path)
+    path = await service.get_page_image_path(document_id, page)
+    target = _resolve_page_image_url(path, settings.seaweedfs_filer_url)
+    return RedirectResponse(target, status_code=307)
