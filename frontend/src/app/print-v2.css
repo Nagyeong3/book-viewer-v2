@@ -1,0 +1,171 @@
+.full-document-print {
+  display: none;
+}
+
+.print-loading-toast {
+  position: fixed;
+  left: 50%;
+  bottom: 72px;
+  z-index: 120;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  transform: translateX(-50%);
+  padding: 10px 14px;
+  border: 1px solid #d9e1ec;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, .97);
+  color: #334158;
+  box-shadow: 0 10px 30px rgba(23, 32, 51, .14);
+  font-size: 11px;
+}
+
+.loading-spinner,
+.page-load-sentinel:not(:empty)::before {
+  width: 14px;
+  height: 14px;
+  flex: 0 0 auto;
+  border: 2px solid #d7deea;
+  border-top-color: #315efb;
+  border-radius: 50%;
+  animation: viewer-spin .7s linear infinite;
+}
+
+.page-load-sentinel:not(:empty) {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 36px;
+  color: #667085;
+}
+
+.page-load-sentinel:not(:empty)::before {
+  content: "";
+}
+
+@keyframes viewer-spin {
+  to { transform: rotate(360deg); }
+}
+
+@media print {
+  @page {
+    size: A4 portrait;
+    margin: 0;
+  }
+
+  html,
+  body {
+    width: 210mm !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    background: #fff !important;
+  }
+
+  body > * {
+    visibility: hidden !important;
+  }
+
+  .full-document-print,
+  .full-document-print * {
+    visibility: visible !important;
+  }
+
+  .full-document-print {
+    position: absolute;
+    inset: 0;
+    display: block !important;
+    width: 210mm;
+    margin: 0;
+    padding: 0;
+    background: #fff;
+  }
+
+  .print-document-page {
+    position: relative;
+    display: block;
+    width: 210mm;
+    height: 297mm;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    break-after: page;
+    page-break-after: always;
+    background: #fff;
+  }
+
+  .print-document-page:last-child {
+    break-after: auto;
+    page-break-after: auto;
+  }
+
+  .print-page-paper {
+    position: relative;
+    width: 210mm;
+    height: auto;
+    max-height: 297mm;
+    margin: 0;
+    overflow: hidden;
+    background: #fff;
+  }
+
+  .print-coordinate-block {
+    position: absolute;
+    overflow: hidden !important;
+    border: 0 !important;
+    outline: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+  }
+
+  .print-coordinate-block.coordinate-block.focused,
+  .workspace-v3 .coordinate-block.focused,
+  .workspace-v3 .toc-tree button.active {
+    border: 0 !important;
+    outline: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+  }
+
+  .print-coordinate-block .coordinate-text,
+  .print-coordinate-block .coordinate-table {
+    margin: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+    overflow: hidden !important;
+    color: #111827 !important;
+    font-size: 8.5pt !important;
+    line-height: 1.22 !important;
+    white-space: pre-wrap !important;
+  }
+
+  .print-coordinate-block .semantic-heading {
+    margin: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+    overflow: hidden !important;
+    color: #111827 !important;
+    line-height: 1.16 !important;
+    font-weight: 700 !important;
+  }
+
+  .print-coordinate-block .semantic-heading-1 { font-size: 14pt !important; }
+  .print-coordinate-block .semantic-heading-2 { font-size: 12pt !important; }
+  .print-coordinate-block .semantic-heading-3 { font-size: 10.5pt !important; }
+  .print-coordinate-block .semantic-heading-4,
+  .print-coordinate-block .semantic-heading-5,
+  .print-coordinate-block .semantic-heading-6 { font-size: 9pt !important; }
+
+  .print-coordinate-block .coordinate-cropped-image {
+    display: block;
+    width: 100% !important;
+    height: 100% !important;
+    object-fit: contain;
+  }
+
+  .product-utility-bar,
+  .print-loading-toast,
+  .workspace-v3 {
+    display: none !important;
+  }
+}
