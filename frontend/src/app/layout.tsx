@@ -4,6 +4,7 @@ import "./page-preview.css";
 import "./workspace-v2.css";
 import "./workspace-media.css";
 import "./coordinate-viewer.css";
+import "./workspace-v3.css";
 
 export const metadata = {
   title: "Book Viewer V2",
