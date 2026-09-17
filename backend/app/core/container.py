@@ -4,6 +4,7 @@ from fastapi import Request
 
 from app.application.agent_service import AgentService
 from app.application.context_builder import ContextBuilder
+from app.application.index_management_service import IndexManagementService
 from app.application.rag_service import RagService
 from app.application.retrieval_service import RetrievalService
 from app.application.viewer_service import ViewerService
@@ -27,6 +28,7 @@ class AppContainer:
     retrieval_service: RetrievalService | None = None
     rag_service: RagService | None = None
     agent_service: AgentService | None = None
+    index_management_service: IndexManagementService | None = None
 
     @classmethod
     async def start(cls, settings: Settings) -> "AppContainer":
@@ -72,6 +74,15 @@ class AppContainer:
             container.embedding_provider = embedding
             container.retrieval_service = retrieval
 
+            if container.postgres_pool is not None:
+                container.index_management_service = IndexManagementService(
+                    container.postgres_pool,
+                    es,
+                    embedding,
+                    alias=settings.es_document_alias,
+                    vector_dimensions=settings.embedding_dimensions,
+                )
+
             if settings.litellm_base_url and settings.litellm_api_key:
                 llm = LiteLLMProvider(
                     settings.litellm_base_url,
@@ -100,6 +111,8 @@ class AppContainer:
         return container
 
     async def close(self) -> None:
+        if self.index_management_service is not None:
+            await self.index_management_service.close()
         if self.llm_provider is not None:
             await self.llm_provider.close()
         if self.embedding_provider is not None:
@@ -143,3 +156,12 @@ def get_agent_service(request: Request) -> AgentService:
     if container.agent_service is None:
         raise RuntimeError("Agent service is unavailable because retrieval/LiteLLM is not configured")
     return container.agent_service
+
+
+def get_index_management_service(request: Request) -> IndexManagementService:
+    container = get_container(request)
+    if container.index_management_service is None:
+        raise RuntimeError(
+            "Index management service is unavailable because PostgreSQL/Elasticsearch/embedding is not configured"
+        )
+    return container.index_management_service
