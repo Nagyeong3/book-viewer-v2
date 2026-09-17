@@ -53,17 +53,19 @@ class IndexManagementService:
 
     async def statuses(self, document_ids: list[int] | None = None) -> list[DocumentIndexStatus]:
         ids = document_ids or await self._source.list_document_ids()
-        return [await self.status(document_id) for document_id in ids]
+        return list(await asyncio.gather(*(self.status(document_id) for document_id in ids)))
 
     async def status(self, document_id: int) -> DocumentIndexStatus:
-        running = self._states.get(document_id)
-        if running and running.state in {"queued", "indexing", "failed"}:
-            return running
+        cached = self._states.get(document_id)
+        if cached and cached.state in {"queued", "indexing"}:
+            return cached
 
         target = ElasticsearchDocumentIndex(self._elasticsearch, index_name=self._alias)
         try:
             count = await target.count_document(document_id)
         except Exception as exc:
+            if cached and cached.state == "failed":
+                return cached
             return DocumentIndexStatus(
                 document_id=document_id,
                 state="failed",
@@ -72,6 +74,8 @@ class IndexManagementService:
             )
         if count > 0:
             return DocumentIndexStatus(document_id=document_id, state="ready", indexed_chunks=count)
+        if cached and cached.state == "failed":
+            return cached
         return DocumentIndexStatus(document_id=document_id, state="missing", indexed_chunks=0)
 
     async def missing_document_ids(self, document_ids: list[int]) -> list[int]:
