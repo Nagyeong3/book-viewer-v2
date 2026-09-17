@@ -33,6 +33,7 @@ type ChapterRange = { id: number; title: string; startPage: number; endPage: num
 const LAYOUT_KEY = "book-viewer-layout-v1";
 const CHAT_KEY = "book-viewer-chat-v1";
 const MAX_SAVED_TURNS = 30;
+const DEFAULT_PAGE_SIZE: PageSize = { width: 1250, height: 1755 };
 const pageSizeCache = new Map<number, PageSize>();
 const clamp = (value: number, min: number, max: number) => Math.min(Math.max(value, min), max);
 
@@ -57,6 +58,17 @@ function maxPage(nodes: TocNode[]): number {
     if (node.children?.length) value = Math.max(value, maxPage(node.children));
   }
   return value;
+}
+
+function flattenToc(nodes: TocNode[]): TocNode[] {
+  return nodes.flatMap((node) => [node, ...flattenToc(node.children ?? [])]);
+}
+
+function tocNodeForVisiblePage(nodes: TocNode[], page: number): TocNode | null {
+  const candidates = flattenToc(nodes)
+    .filter((node) => node.page != null && node.page <= page)
+    .sort((a, b) => (b.page ?? 0) - (a.page ?? 0) || b.doc_level - a.doc_level || b.order_index - a.order_index);
+  return candidates[0] ?? null;
 }
 
 function levelOneChapters(toc: TocNode[]): ChapterRange[] {
@@ -127,15 +139,15 @@ function DocumentPage({ page, contents, pageSize, focusContentId }: { page: numb
   );
 }
 
-function TocTree({ nodes, activePage, onPick }: { nodes: TocNode[]; activePage: number | null; onPick: (node: TocNode) => void }) {
+function TocTree({ nodes, activeTocId, onPick }: { nodes: TocNode[]; activeTocId: number | null; onPick: (node: TocNode) => void }) {
   return (
     <ul className="toc-tree">
       {nodes.map((node) => (
         <li key={node.id}>
-          <button type="button" className={node.page === activePage ? "active" : ""} onClick={() => onPick(node)}>
+          <button type="button" className={node.id === activeTocId ? "active" : ""} onClick={() => onPick(node)}>
             <span className="toc-num">{node.title_num}</span><span>{node.text}</span>{node.page ? <small>p.{node.page}</small> : null}
           </button>
-          {node.children?.length ? <TocTree nodes={node.children} activePage={activePage} onPick={onPick} /> : null}
+          {node.children?.length ? <TocTree nodes={node.children} activeTocId={activeTocId} onPick={onPick} /> : null}
         </li>
       ))}
     </ul>
@@ -163,7 +175,8 @@ export default function WorkspaceV3() {
   const [chapter, setChapter] = useState<ChapterRange | null>(null);
   const [pageContents, setPageContents] = useState<Record<number, ContentItem[]>>({});
   const [activePage, setActivePage] = useState<number | null>(null);
-  const [pageSize, setPageSize] = useState<PageSize | null>(null);
+  const [activeTocId, setActiveTocId] = useState<number | null>(null);
+  const [pageSize, setPageSize] = useState<PageSize>(DEFAULT_PAGE_SIZE);
   const [pageSizeError, setPageSizeError] = useState("");
   const [focusContentId, setFocusContentId] = useState<number | null>(null);
   const [question, setQuestion] = useState("");
@@ -183,6 +196,7 @@ export default function WorkspaceV3() {
   const generationRef = useRef(0);
   const pageSizeLoadingRef = useRef(false);
   const pendingScrollPageRef = useRef<number | null>(null);
+  const tocManualLockUntilRef = useRef(0);
 
   useEffect(() => {
     try {
@@ -209,13 +223,15 @@ export default function WorkspaceV3() {
     if (!activeDocumentId) return;
     let cancelled = false;
     pageSizeLoadingRef.current = false;
-    setPageSize(pageSizeCache.get(activeDocumentId) ?? null);
+    setPageSize(pageSizeCache.get(activeDocumentId) ?? DEFAULT_PAGE_SIZE);
     setPageSizeError("");
+    setActiveTocId(null);
     api.getToc(activeDocumentId).then((items) => {
       if (cancelled) return;
       setToc(items);
       const start = firstPage(items) ?? 1;
       setActivePage(start);
+      setActiveTocId(tocNodeForVisiblePage(items, start)?.id ?? null);
       setChapter(chapterForPage(items, start));
     }).catch((error: Error) => { if (!cancelled) setStartupError(error.message); });
     return () => { cancelled = true; };
@@ -225,7 +241,11 @@ export default function WorkspaceV3() {
     if (!activeDocumentId || pageSizeCache.has(activeDocumentId) || pageSizeLoadingRef.current) return;
     const path = items.find((item) => item.doc_image_path)?.doc_image_path;
     const src = getSafeImageUrl(path);
-    if (!src) { setPageSizeError("문서의 원본 이미지 경로를 찾지 못해 페이지 규격을 결정할 수 없습니다."); return; }
+    if (!src) {
+      setPageSize(DEFAULT_PAGE_SIZE);
+      setPageSizeError("기본 페이지 규격 1250 × 1755를 사용 중입니다.");
+      return;
+    }
     pageSizeLoadingRef.current = true;
     const image = new Image();
     image.onload = () => {
@@ -236,7 +256,11 @@ export default function WorkspaceV3() {
       setPageSize(measured);
       setPageSizeError("");
     };
-    image.onerror = () => { pageSizeLoadingRef.current = false; setPageSizeError("원본 이미지 1장을 이용한 페이지 규격 확인에 실패했습니다."); };
+    image.onerror = () => {
+      pageSizeLoadingRef.current = false;
+      setPageSize(DEFAULT_PAGE_SIZE);
+      setPageSizeError("이미지 서버를 사용할 수 없어 기본 페이지 규격 1250 × 1755를 사용 중입니다.");
+    };
     image.src = src;
   }, [activeDocumentId]);
 
@@ -307,11 +331,15 @@ export default function WorkspaceV3() {
       const visible = entries.filter((entry) => entry.isIntersecting).sort((a, b) => b.intersectionRatio - a.intersectionRatio)[0];
       if (!visible) return;
       const page = Number((visible.target as HTMLElement).dataset.page);
-      if (page) setActivePage(page);
+      if (!page) return;
+      setActivePage(page);
+      if (performance.now() >= tocManualLockUntilRef.current) {
+        setActiveTocId(tocNodeForVisiblePage(toc, page)?.id ?? null);
+      }
     }, { root, threshold: [0.35, 0.55, 0.75] });
     root.querySelectorAll(".chapter-page-frame").forEach((element) => observer.observe(element));
     return () => observer.disconnect();
-  }, [loadedPages.join(",")]);
+  }, [loadedPages.join(","), toc]);
 
   useEffect(() => {
     const page = pendingScrollPageRef.current;
@@ -349,6 +377,8 @@ export default function WorkspaceV3() {
 
   function openToc(node: TocNode) {
     const page = node.page ?? firstPage(node.children ?? []);
+    setActiveTocId(node.id);
+    tocManualLockUntilRef.current = performance.now() + 900;
     if (page) navigateToPage(page, node.id);
   }
 
@@ -404,9 +434,9 @@ export default function WorkspaceV3() {
       <header className="topbar product-topbar"><div className="brand-block"><strong>LAH 기술문서</strong><span>Continuous Book Viewer · Agentic RAG</span></div><div className="topbar-actions">{chapter ? <span className="chapter-pill">{chapter.title} · p.{activePage ?? chapter.startPage}</span> : null}{layout.tocCollapsed ? <button type="button" onClick={() => setLayout((current) => ({ ...current, tocCollapsed: false }))}>목차 열기</button> : null}{layout.chatCollapsed ? <button type="button" onClick={() => setLayout((current) => ({ ...current, chatCollapsed: false }))}>AI 비서 열기</button> : null}<span className="status-pill">선택 문서 {selectedIds.length}</span></div></header>
       {startupError ? <div className="global-error">{startupError}</div> : null}
       <section className="workspace-grid" style={gridStyle}>
-        <aside className={`document-pane panel ${layout.tocCollapsed ? "collapsed" : ""}`}><div className="panel-heading compact-heading"><div><h2>문서 · 목차</h2><p>검색 범위와 현재 챕터를 관리합니다.</p></div><button type="button" className="icon-button" onClick={() => setLayout((current) => ({ ...current, tocCollapsed: true }))}>‹</button></div><div className="document-picker polished-picker"><input className="document-search" value={documentQuery} onChange={(event) => setDocumentQuery(event.target.value)} placeholder="문서명 또는 ID 검색" /><div className="document-list document-list-large">{filteredDocuments.map((document) => { const selected = selectedIds.includes(document.id); return <button key={document.id} type="button" className={`document-item ${selected ? "selected" : ""} ${activeDocumentId === document.id ? "active" : ""}`} onClick={() => selectDocument(document.id)}><span className="checkbox-mark">{selected ? "✓" : ""}</span><span><strong>{document.title}</strong><small>Document #{document.id}</small></span></button>; })}</div></div><div className="toc-section"><div className="section-label">목차</div>{toc.length ? <TocTree nodes={toc} activePage={activePage} onPick={openToc} /> : <div className="muted">목차 없음</div>}</div></aside>
+        <aside className={`document-pane panel ${layout.tocCollapsed ? "collapsed" : ""}`}><div className="panel-heading compact-heading"><div><h2>문서 · 목차</h2><p>검색 범위와 현재 챕터를 관리합니다.</p></div><button type="button" className="icon-button" onClick={() => setLayout((current) => ({ ...current, tocCollapsed: true }))}>‹</button></div><div className="document-picker polished-picker"><input className="document-search" value={documentQuery} onChange={(event) => setDocumentQuery(event.target.value)} placeholder="문서명 또는 ID 검색" /><div className="document-list document-list-large">{filteredDocuments.map((document) => { const selected = selectedIds.includes(document.id); return <button key={document.id} type="button" className={`document-item ${selected ? "selected" : ""} ${activeDocumentId === document.id ? "active" : ""}`} onClick={() => selectDocument(document.id)}><span className="checkbox-mark">{selected ? "✓" : ""}</span><span><strong>{document.title}</strong><small>Document #{document.id}</small></span></button>; })}</div></div><div className="toc-section"><div className="section-label">목차</div>{toc.length ? <TocTree nodes={toc} activeTocId={activeTocId} onPick={openToc} /> : <div className="muted">목차 없음</div>}</div></aside>
         <div className={`resize-handle ${layout.tocCollapsed ? "hidden" : ""}`} onPointerDown={(event) => beginResize("toc", event)} />
-        <section className="viewer-pane panel chapter-viewer-panel"><div className="panel-heading viewer-heading sticky-viewer-heading"><div><h2>{activeDocument?.title ?? "문서 선택"}</h2><p>{chapter ? `${chapter.title} · p.${chapter.startPage}–${chapter.endPage}` : "챕터를 불러오는 중"}</p></div><div className="viewer-status"><span>{loadedPages.length} page loaded</span><strong>p.{activePage ?? "-"}</strong></div></div><div className="viewer-scroll chapter-scroll" ref={viewerRef}><div ref={topSentinelRef} className="page-load-sentinel">{chapter && loadedPages.length && loadedPages[0] > chapter.startPage ? "이전 페이지 준비 중" : ""}</div>{!pageSize ? <div className="coordinate-page-loading"><strong>페이지 규격 확인 중</strong><p>{pageSizeError || "원본 이미지 1장으로 문서 페이지 크기를 확인합니다."}</p></div> : null}{pageSize && loadedPages.map((page) => <DocumentPage key={page} page={page} contents={pageContents[page] ?? []} pageSize={pageSize} focusContentId={focusContentId} />)}<div ref={bottomSentinelRef} className="page-load-sentinel">{chapter && loadedPages.length && loadedPages[loadedPages.length - 1] < chapter.endPage ? "다음 페이지 준비 중" : ""}</div></div></section>
+        <section className="viewer-pane panel chapter-viewer-panel"><div className="panel-heading viewer-heading sticky-viewer-heading"><div><h2>{activeDocument?.title ?? "문서 선택"}</h2><p>{chapter ? `${chapter.title} · p.${chapter.startPage}–${chapter.endPage}` : "챕터를 불러오는 중"}</p></div><div className="viewer-status"><span>{pageSizeError || `${pageSize.width} × ${pageSize.height}`}</span><strong>p.{activePage ?? "-"}</strong></div></div><div className="viewer-scroll chapter-scroll" ref={viewerRef}><div ref={topSentinelRef} className="page-load-sentinel">{chapter && loadedPages.length && loadedPages[0] > chapter.startPage ? "이전 페이지 준비 중" : ""}</div>{loadedPages.map((page) => <DocumentPage key={page} page={page} contents={pageContents[page] ?? []} pageSize={pageSize} focusContentId={focusContentId} />)}<div ref={bottomSentinelRef} className="page-load-sentinel">{chapter && loadedPages.length && loadedPages[loadedPages.length - 1] < chapter.endPage ? "다음 페이지 준비 중" : ""}</div></div></section>
         <div className={`resize-handle ${layout.chatCollapsed ? "hidden" : ""}`} onPointerDown={(event) => beginResize("chat", event)} />
         <aside className={`chat-pane panel ${layout.chatCollapsed ? "collapsed" : ""}`}><div className="assistant-header"><div className="assistant-tabs"><button type="button" className={assistantTab === "assistant" ? "active" : ""} onClick={() => setAssistantTab("assistant")}>AI 비서</button><button type="button" className={assistantTab === "process" ? "active" : ""} onClick={() => setAssistantTab("process")}>Agent Process</button></div><button type="button" className="icon-button" onClick={() => setLayout((current) => ({ ...current, chatCollapsed: true }))}>›</button></div>{assistantTab === "assistant" ? <><div className="chat-controls"><div className="segmented"><button type="button" className={mode === "agent" ? "active" : ""} onClick={() => setMode("agent")}>Agent</button><button type="button" className={mode === "rag" ? "active" : ""} onClick={() => setMode("rag")}>Hybrid RAG</button></div><label>Top K<select value={topK} onChange={(event) => setTopK(Number(event.target.value))}>{[3,5,8,10].map((value) => <option key={value}>{value}</option>)}</select></label></div><SourceDock turn={latestTurn} onOpen={openSource} /><div className="chat-log">{!turns.length ? <div className="empty-chat"><strong>선택한 문서에 질문하세요.</strong><p>근거 문서를 먼저 보여주고 답변을 스트리밍합니다.</p></div> : null}{turns.map((turn) => <article key={turn.id} className="chat-turn"><div className="user-message">{turn.question}</div><div className="assistant-message"><div className="answer-text">{turn.answer || (turn.pending ? "답변 생성 중..." : "")}{turn.pending ? <span className="cursor" /> : null}</div>{turn.error ? <div className="turn-error">{turn.error}</div> : null}</div></article>)}</div><form className="question-form" onSubmit={submitQuestion}><textarea value={question} onChange={(event) => setQuestion(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter" && !event.shiftKey) { event.preventDefault(); event.currentTarget.form?.requestSubmit(); } }} placeholder="선택한 문서에 대해 질문하세요" rows={3} /><div><span>{selectedIds.length}개 문서 범위 · 대화 로컬 저장</span><button type="submit" disabled={!question.trim() || !selectedIds.length}>질문 전송</button></div></form></> : <div className="process-pane">{latestTurn?.plan ? <><div className="process-status">{latestTurn.pending ? "실행 중" : "완료"}</div><dl><div><dt>Tool</dt><dd>{latestTurn.plan.tool}</dd></div><div><dt>Query</dt><dd>{latestTurn.plan.query}</dd></div><div><dt>Top K</dt><dd>{latestTurn.plan.top_k}</dd></div><div><dt>Reason</dt><dd>{latestTurn.plan.rationale || "-"}</dd></div><div><dt>Sources</dt><dd>{latestTurn.sources.length}</dd></div></dl></> : <div className="empty-chat"><strong>아직 Agent 실행 내역이 없습니다.</strong><p>Agent 모드로 질문하면 이 탭에서 계획을 확인할 수 있습니다.</p></div>}</div>}</aside>
       </section>
