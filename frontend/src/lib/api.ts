@@ -25,6 +25,13 @@ export type ContentItem = {
   title_num: string | null;
 };
 
+export type DocumentIndexStatus = {
+  document_id: number;
+  state: "ready" | "missing" | "queued" | "indexing" | "failed";
+  indexed_chunks: number;
+  message: string | null;
+};
+
 export type RagSource = {
   source_id: string;
   chunk_id: string;
@@ -71,6 +78,12 @@ export const api = {
   listContents: (documentId: number, page?: number) =>
     request<ContentItem[]>(`/api/documents/${documentId}/contents${page ? `?page=${page}` : ""}`),
   pageImageUrl: (documentId: number, page: number) => `${API_BASE}/api/documents/${documentId}/pages/${page}/image`,
+  listIndexStatuses: (documentIds?: number[]) => {
+    const params = documentIds?.length ? `?${documentIds.map((id) => `document_ids=${id}`).join("&")}` : "";
+    return request<DocumentIndexStatus[]>(`/api/indexing/documents${params}`);
+  },
+  getIndexStatus: (documentId: number) => request<DocumentIndexStatus>(`/api/indexing/documents/${documentId}`),
+  buildDocumentIndex: (documentId: number) => request<DocumentIndexStatus>(`/api/indexing/documents/${documentId}`, { method: "POST" }),
 };
 
 function parseSseBlock(block: string): { event: string; data: unknown } | null {
