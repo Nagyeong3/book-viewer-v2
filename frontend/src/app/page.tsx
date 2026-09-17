@@ -1,5 +1,5 @@
-import WorkspaceV2 from "../components/WorkspaceV2";
+import WorkspaceV3 from "../components/WorkspaceV3";
 
 export default function HomePage() {
-  return <WorkspaceV2 />;
+  return <WorkspaceV3 />;
 }
