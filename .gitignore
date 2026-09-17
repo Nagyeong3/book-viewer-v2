@@ -10,11 +10,14 @@ __pycache__/
 .mypy_cache/
 .ruff_cache/
 .venv/
+bookviewer-v2-py312/
+offline-wheel/
 
 # Node
 node_modules/
 .next/
 out/
+frontend/server.js
 
 # IDE/OS
 .vscode/
