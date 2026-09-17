@@ -5,7 +5,7 @@
 .print-loading-toast {
   position: fixed;
   left: 50%;
-  bottom: 72px;
+  bottom: 24px;
   z-index: 120;
   display: flex;
   align-items: center;
@@ -21,7 +21,7 @@
 }
 
 .loading-spinner,
-.page-load-sentinel:not(:empty)::before {
+.page-load-sentinel.edge-load-active::before {
   width: 14px;
   height: 14px;
   flex: 0 0 auto;
@@ -31,7 +31,13 @@
   animation: viewer-spin .7s linear infinite;
 }
 
-.page-load-sentinel:not(:empty) {
+.page-load-sentinel {
+  min-height: 16px;
+  color: transparent;
+  transition: min-height .15s ease, color .15s ease;
+}
+
+.page-load-sentinel.edge-load-active {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -40,8 +46,32 @@
   color: #667085;
 }
 
-.page-load-sentinel:not(:empty)::before {
+.page-load-sentinel.edge-load-active::before {
   content: "";
+}
+
+.viewer-print-button {
+  min-height: 28px;
+  padding: 0 10px;
+  border: 1px solid #d6deea;
+  border-radius: 8px;
+  background: #fff;
+  color: #364258;
+  font: inherit;
+  font-size: 10px;
+  font-weight: 650;
+  cursor: pointer;
+}
+
+.viewer-print-button:hover {
+  border-color: #b8c5ff;
+  background: #f5f7ff;
+  color: #2446c7;
+}
+
+.viewer-print-button:disabled {
+  cursor: wait;
+  opacity: .6;
 }
 
 @keyframes viewer-spin {
@@ -163,7 +193,7 @@
     object-fit: contain;
   }
 
-  .product-utility-bar,
+  .viewer-print-button,
   .print-loading-toast,
   .workspace-v3 {
     display: none !important;
