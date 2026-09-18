@@ -22,6 +22,7 @@ import {
   TocNode,
 } from "../lib/api";
 import { getSafeImageUrl } from "../lib/seaweed";
+import TableHtml from "./TableHtml";
 
 type Mode = "agent" | "rag";
 type AssistantTab = "assistant" | "process";
@@ -107,7 +108,7 @@ function SemanticBlock({ item }: { item: ContentItem }) {
       <img className="coordinate-cropped-image" src={src} alt={text || `content ${item.id}`} loading="lazy" />
     ) : <div className="coordinate-placeholder image">이미지 경로 없음</div>;
   }
-  if (item.content_type === "table") return <div className="coordinate-table">{text || "표"}</div>;
+  if (item.content_type === "table") return <TableHtml html={text} />;
   return <div className="coordinate-text">{text || ""}</div>;
 }
 
