@@ -5,6 +5,7 @@ import { createPortal } from "react-dom";
 
 import { api, ContentItem } from "../lib/api";
 import { getSafeImageUrl } from "../lib/seaweed";
+import TableHtml from "./TableHtml";
 
 const DEFAULT_PAGE_SIZE = { width: 1250, height: 1755 };
 
@@ -42,7 +43,7 @@ function PrintBlock({ item }: { item: ContentItem }) {
       <img className="coordinate-cropped-image" src={src} alt={text || `content ${item.id}`} loading="eager" />
     ) : null;
   }
-  if (item.content_type === "table") return <div className="coordinate-table">{text || "표"}</div>;
+  if (item.content_type === "table") return <TableHtml html={text} />;
   return <div className="coordinate-text">{text || ""}</div>;
 }
 
