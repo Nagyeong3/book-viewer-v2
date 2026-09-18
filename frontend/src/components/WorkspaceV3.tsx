@@ -139,17 +139,48 @@ function DocumentPage({ page, contents, pageSize, focusContentId }: { page: numb
   );
 }
 
-function TocTree({ nodes, activeTocId, onPick }: { nodes: TocNode[]; activeTocId: number | null; onPick: (node: TocNode) => void }) {
+function TocTree({
+  nodes,
+  activeTocId,
+  expandedIds,
+  onPick,
+  onToggle,
+}: {
+  nodes: TocNode[];
+  activeTocId: number | null;
+  expandedIds: Set<number>;
+  onPick: (node: TocNode) => void;
+  onToggle: (nodeId: number) => void;
+}) {
   return (
     <ul className="toc-tree">
-      {nodes.map((node) => (
-        <li key={node.id}>
-          <button type="button" className={node.id === activeTocId ? "active" : ""} onClick={() => onPick(node)}>
-            <span className="toc-num">{node.title_num}</span><span>{node.text}</span>{node.page ? <small>p.{node.page}</small> : null}
-          </button>
-          {node.children?.length ? <TocTree nodes={node.children} activeTocId={activeTocId} onPick={onPick} /> : null}
-        </li>
-      ))}
+      {nodes.map((node) => {
+        const hasChildren = Boolean(node.children?.length);
+        const expanded = hasChildren && expandedIds.has(node.id);
+        return (
+          <li key={node.id}>
+            <div className="toc-row">
+              {hasChildren ? (
+                <button
+                  type="button"
+                  className="toc-toggle"
+                  aria-label={expanded ? "목차 접기" : "목차 펼치기"}
+                  aria-expanded={expanded}
+                  onClick={() => onToggle(node.id)}
+                >
+                  {expanded ? "▾" : "▸"}
+                </button>
+              ) : <span className="toc-toggle-spacer" />}
+              <button type="button" className={node.id === activeTocId ? "active toc-link" : "toc-link"} onClick={() => onPick(node)}>
+                <span className="toc-num">{node.title_num}</span><span>{node.text}</span>{node.page ? <small>p.{node.page}</small> : null}
+              </button>
+            </div>
+            {hasChildren && expanded ? (
+              <TocTree nodes={node.children ?? []} activeTocId={activeTocId} expandedIds={expandedIds} onPick={onPick} onToggle={onToggle} />
+            ) : null}
+          </li>
+        );
+      })}
     </ul>
   );
 }
@@ -176,6 +207,8 @@ export default function WorkspaceV3() {
   const [pageContents, setPageContents] = useState<Record<number, ContentItem[]>>({});
   const [activePage, setActivePage] = useState<number | null>(null);
   const [activeTocId, setActiveTocId] = useState<number | null>(null);
+  const [expandedTocIds, setExpandedTocIds] = useState<Set<number>>(() => new Set());
+  const [loadingEdge, setLoadingEdge] = useState<"top" | "bottom" | null>(null);
   const [pageSize, setPageSize] = useState<PageSize>(DEFAULT_PAGE_SIZE);
   const [pageSizeError, setPageSizeError] = useState("");
   const [focusContentId, setFocusContentId] = useState<number | null>(null);
@@ -188,11 +221,8 @@ export default function WorkspaceV3() {
   const [layout, setLayout] = useState<LayoutState>({ tocWidth: 310, chatWidth: 420, tocCollapsed: false, chatCollapsed: false });
   const abortRef = useRef<AbortController | null>(null);
   const viewerRef = useRef<HTMLDivElement | null>(null);
-  const topSentinelRef = useRef<HTMLDivElement | null>(null);
-  const bottomSentinelRef = useRef<HTMLDivElement | null>(null);
   const loadedPagesRef = useRef(new Set<number>());
   const inFlightRef = useRef(new Set<number>());
-  const edgeLoadingRef = useRef({ top: false, bottom: false });
   const generationRef = useRef(0);
   const pageSizeLoadingRef = useRef(false);
   const pendingScrollPageRef = useRef<number | null>(null);
@@ -229,6 +259,7 @@ export default function WorkspaceV3() {
     api.getToc(activeDocumentId).then((items) => {
       if (cancelled) return;
       setToc(items);
+      setExpandedTocIds(new Set(items.filter((node) => node.doc_level === 1 && node.children?.length).map((node) => node.id)));
       const start = firstPage(items) ?? 1;
       setActivePage(start);
       setActiveTocId(tocNodeForVisiblePage(items, start)?.id ?? null);
@@ -291,7 +322,7 @@ export default function WorkspaceV3() {
     generationRef.current += 1;
     loadedPagesRef.current.clear();
     inFlightRef.current.clear();
-    edgeLoadingRef.current = { top: false, bottom: false };
+    setLoadingEdge(null);
     setPageContents({});
     const target = activePage;
     void fetchPage(target).then(() => { void fetchPage(target - 1, true); void fetchPage(target + 1); });
@@ -302,26 +333,55 @@ export default function WorkspaceV3() {
   useEffect(() => {
     const root = viewerRef.current;
     if (!root || !chapter) return;
-    const trigger = async (side: "top" | "bottom") => {
-      if (edgeLoadingRef.current[side]) return;
+
+    let cancelled = false;
+    let running = false;
+    const EDGE_PRELOAD_PX = 850;
+
+    const loadEdge = async (side: "top" | "bottom") => {
+      if (cancelled || running) return;
       const pages = Array.from(loadedPagesRef.current).sort((a, b) => a - b);
       if (!pages.length) return;
       const next = side === "top" ? pages[0] - 1 : pages[pages.length - 1] + 1;
       if (next < chapter.startPage || next > chapter.endPage) return;
-      edgeLoadingRef.current[side] = true;
+
+      running = true;
+      setLoadingEdge(side);
+      console.debug(`[viewer] request page=${next} side=${side}`);
       await fetchPage(next, side === "top");
-      window.setTimeout(() => { edgeLoadingRef.current[side] = false; }, 220);
+      console.debug(`[viewer] page=${next} finished loaded=${loadedPagesRef.current.has(next)}`);
+      running = false;
+      if (!cancelled) setLoadingEdge(null);
+
+      requestAnimationFrame(() => {
+        if (!cancelled) checkEdge();
+      });
     };
-    const observer = new IntersectionObserver((entries) => {
-      for (const entry of entries) {
-        if (!entry.isIntersecting) continue;
-        if (entry.target === topSentinelRef.current) void trigger("top");
-        if (entry.target === bottomSentinelRef.current) void trigger("bottom");
+
+    const checkEdge = () => {
+      if (cancelled || running) return;
+      const distanceBottom = root.scrollHeight - root.scrollTop - root.clientHeight;
+      if (distanceBottom <= EDGE_PRELOAD_PX) {
+        console.debug(`[viewer] edge check bottom distance=${Math.round(distanceBottom)}`);
+        void loadEdge("bottom");
+        return;
       }
-    }, { root, rootMargin: "650px 0px", threshold: 0.01 });
-    if (topSentinelRef.current) observer.observe(topSentinelRef.current);
-    if (bottomSentinelRef.current) observer.observe(bottomSentinelRef.current);
-    return () => observer.disconnect();
+      if (root.scrollTop <= EDGE_PRELOAD_PX) {
+        console.debug(`[viewer] edge check top distance=${Math.round(root.scrollTop)}`);
+        void loadEdge("top");
+      }
+    };
+
+    root.addEventListener("scroll", checkEdge, { passive: true });
+    const resizeObserver = new ResizeObserver(checkEdge);
+    resizeObserver.observe(root);
+    requestAnimationFrame(checkEdge);
+
+    return () => {
+      cancelled = true;
+      root.removeEventListener("scroll", checkEdge);
+      resizeObserver.disconnect();
+    };
   }, [chapter, fetchPage, loadedPages.length]);
 
   useEffect(() => {
@@ -373,6 +433,15 @@ export default function WorkspaceV3() {
       setActivePage(page);
       void fetchPage(page).then(() => requestAnimationFrame(() => viewerRef.current?.querySelector<HTMLElement>(`.chapter-page-frame[data-page="${page}"]`)?.scrollIntoView({ behavior: "smooth", block: "start" })));
     }
+  }
+
+  function toggleToc(nodeId: number) {
+    setExpandedTocIds((current) => {
+      const next = new Set(current);
+      if (next.has(nodeId)) next.delete(nodeId);
+      else next.add(nodeId);
+      return next;
+    });
   }
 
   function openToc(node: TocNode) {
@@ -434,9 +503,9 @@ export default function WorkspaceV3() {
       <header className="topbar product-topbar"><div className="brand-block"><strong>LAH 기술문서</strong><span>Continuous Book Viewer · Agentic RAG</span></div><div className="topbar-actions">{chapter ? <span className="chapter-pill">{chapter.title} · p.{activePage ?? chapter.startPage}</span> : null}{layout.tocCollapsed ? <button type="button" onClick={() => setLayout((current) => ({ ...current, tocCollapsed: false }))}>목차 열기</button> : null}{layout.chatCollapsed ? <button type="button" onClick={() => setLayout((current) => ({ ...current, chatCollapsed: false }))}>AI 비서 열기</button> : null}<span className="status-pill">선택 문서 {selectedIds.length}</span></div></header>
       {startupError ? <div className="global-error">{startupError}</div> : null}
       <section className="workspace-grid" style={gridStyle}>
-        <aside className={`document-pane panel ${layout.tocCollapsed ? "collapsed" : ""}`}><div className="panel-heading compact-heading"><div><h2>문서 · 목차</h2><p>검색 범위와 현재 챕터를 관리합니다.</p></div><button type="button" className="icon-button" onClick={() => setLayout((current) => ({ ...current, tocCollapsed: true }))}>‹</button></div><div className="document-picker polished-picker"><input className="document-search" value={documentQuery} onChange={(event) => setDocumentQuery(event.target.value)} placeholder="문서명 또는 ID 검색" /><div className="document-list document-list-large">{filteredDocuments.map((document) => { const selected = selectedIds.includes(document.id); return <button key={document.id} type="button" className={`document-item ${selected ? "selected" : ""} ${activeDocumentId === document.id ? "active" : ""}`} onClick={() => selectDocument(document.id)}><span className="checkbox-mark">{selected ? "✓" : ""}</span><span><strong>{document.title}</strong><small>Document #{document.id}</small></span></button>; })}</div></div><div className="toc-section"><div className="section-label">목차</div>{toc.length ? <TocTree nodes={toc} activeTocId={activeTocId} onPick={openToc} /> : <div className="muted">목차 없음</div>}</div></aside>
+        <aside className={`document-pane panel ${layout.tocCollapsed ? "collapsed" : ""}`}><div className="panel-heading compact-heading"><div><h2>문서 · 목차</h2><p>검색 범위와 현재 챕터를 관리합니다.</p></div><button type="button" className="icon-button" onClick={() => setLayout((current) => ({ ...current, tocCollapsed: true }))}>‹</button></div><div className="document-picker polished-picker"><input className="document-search" value={documentQuery} onChange={(event) => setDocumentQuery(event.target.value)} placeholder="문서명 또는 ID 검색" /><div className="document-list document-list-large">{filteredDocuments.map((document) => { const selected = selectedIds.includes(document.id); return <button key={document.id} type="button" className={`document-item ${selected ? "selected" : ""} ${activeDocumentId === document.id ? "active" : ""}`} onClick={() => selectDocument(document.id)}><span className="checkbox-mark">{selected ? "✓" : ""}</span><span><strong>{document.title}</strong><small>Document #{document.id}</small></span></button>; })}</div></div><div className="toc-section"><div className="section-label">목차</div>{toc.length ? <TocTree nodes={toc} activeTocId={activeTocId} expandedIds={expandedTocIds} onPick={openToc} onToggle={toggleToc} /> : <div className="muted">목차 없음</div>}</div></aside>
         <div className={`resize-handle ${layout.tocCollapsed ? "hidden" : ""}`} onPointerDown={(event) => beginResize("toc", event)} />
-        <section className="viewer-pane panel chapter-viewer-panel"><div className="panel-heading viewer-heading sticky-viewer-heading"><div><h2>{activeDocument?.title ?? "문서 선택"}</h2><p>{chapter ? `${chapter.title} · p.${chapter.startPage}–${chapter.endPage}` : "챕터를 불러오는 중"}</p></div><div className="viewer-status"><span>{pageSizeError || `${pageSize.width} × ${pageSize.height}`}</span><strong>p.{activePage ?? "-"}</strong></div></div><div className="viewer-scroll chapter-scroll" ref={viewerRef}><div ref={topSentinelRef} className="page-load-sentinel">{chapter && loadedPages.length && loadedPages[0] > chapter.startPage ? "이전 페이지 준비 중" : ""}</div>{loadedPages.map((page) => <DocumentPage key={page} page={page} contents={pageContents[page] ?? []} pageSize={pageSize} focusContentId={focusContentId} />)}<div ref={bottomSentinelRef} className="page-load-sentinel">{chapter && loadedPages.length && loadedPages[loadedPages.length - 1] < chapter.endPage ? "다음 페이지 준비 중" : ""}</div></div></section>
+        <section className="viewer-pane panel chapter-viewer-panel"><div className="panel-heading viewer-heading sticky-viewer-heading"><div><h2>{activeDocument?.title ?? "문서 선택"}</h2><p>{chapter ? `${chapter.title} · p.${chapter.startPage}–${chapter.endPage}` : "챕터를 불러오는 중"}</p></div><div className="viewer-status"><span>{pageSizeError || `${pageSize.width} × ${pageSize.height}`}</span><strong>p.{activePage ?? "-"}</strong></div></div><div className="viewer-scroll chapter-scroll" ref={viewerRef}><div className={`page-load-sentinel ${loadingEdge === "top" ? "edge-load-active" : ""}`}>{chapter && loadedPages.length && loadedPages[0] > chapter.startPage ? "이전 페이지 준비 중" : ""}</div>{loadedPages.map((page) => <DocumentPage key={page} page={page} contents={pageContents[page] ?? []} pageSize={pageSize} focusContentId={focusContentId} />)}<div className={`page-load-sentinel ${loadingEdge === "bottom" ? "edge-load-active" : ""}`}>{chapter && loadedPages.length && loadedPages[loadedPages.length - 1] < chapter.endPage ? "다음 페이지 준비 중" : ""}</div></div></section>
         <div className={`resize-handle ${layout.chatCollapsed ? "hidden" : ""}`} onPointerDown={(event) => beginResize("chat", event)} />
         <aside className={`chat-pane panel ${layout.chatCollapsed ? "collapsed" : ""}`}><div className="assistant-header"><div className="assistant-tabs"><button type="button" className={assistantTab === "assistant" ? "active" : ""} onClick={() => setAssistantTab("assistant")}>AI 비서</button><button type="button" className={assistantTab === "process" ? "active" : ""} onClick={() => setAssistantTab("process")}>Agent Process</button></div><button type="button" className="icon-button" onClick={() => setLayout((current) => ({ ...current, chatCollapsed: true }))}>›</button></div>{assistantTab === "assistant" ? <><div className="chat-controls"><div className="segmented"><button type="button" className={mode === "agent" ? "active" : ""} onClick={() => setMode("agent")}>Agent</button><button type="button" className={mode === "rag" ? "active" : ""} onClick={() => setMode("rag")}>Hybrid RAG</button></div><label>Top K<select value={topK} onChange={(event) => setTopK(Number(event.target.value))}>{[3,5,8,10].map((value) => <option key={value}>{value}</option>)}</select></label></div><SourceDock turn={latestTurn} onOpen={openSource} /><div className="chat-log">{!turns.length ? <div className="empty-chat"><strong>선택한 문서에 질문하세요.</strong><p>근거 문서를 먼저 보여주고 답변을 스트리밍합니다.</p></div> : null}{turns.map((turn) => <article key={turn.id} className="chat-turn"><div className="user-message">{turn.question}</div><div className="assistant-message"><div className="answer-text">{turn.answer || (turn.pending ? "답변 생성 중..." : "")}{turn.pending ? <span className="cursor" /> : null}</div>{turn.error ? <div className="turn-error">{turn.error}</div> : null}</div></article>)}</div><form className="question-form" onSubmit={submitQuestion}><textarea value={question} onChange={(event) => setQuestion(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter" && !event.shiftKey) { event.preventDefault(); event.currentTarget.form?.requestSubmit(); } }} placeholder="선택한 문서에 대해 질문하세요" rows={3} /><div><span>{selectedIds.length}개 문서 범위 · 대화 로컬 저장</span><button type="submit" disabled={!question.trim() || !selectedIds.length}>질문 전송</button></div></form></> : <div className="process-pane">{latestTurn?.plan ? <><div className="process-status">{latestTurn.pending ? "실행 중" : "완료"}</div><dl><div><dt>Tool</dt><dd>{latestTurn.plan.tool}</dd></div><div><dt>Query</dt><dd>{latestTurn.plan.query}</dd></div><div><dt>Top K</dt><dd>{latestTurn.plan.top_k}</dd></div><div><dt>Reason</dt><dd>{latestTurn.plan.rationale || "-"}</dd></div><div><dt>Sources</dt><dd>{latestTurn.sources.length}</dd></div></dl></> : <div className="empty-chat"><strong>아직 Agent 실행 내역이 없습니다.</strong><p>Agent 모드로 질문하면 이 탭에서 계획을 확인할 수 있습니다.</p></div>}</div>}</aside>
       </section>
