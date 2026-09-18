@@ -25,6 +25,13 @@ export type ContentItem = {
   title_num: string | null;
 };
 
+export type DocumentIndexStatus = {
+  document_id: number;
+  state: "ready" | "missing" | "queued" | "indexing" | "failed";
+  indexed_chunks: number;
+  message: string | null;
+};
+
 export type RagSource = {
   source_id: string;
   chunk_id: string;
@@ -71,6 +78,12 @@ export const api = {
   listContents: (documentId: number, page?: number) =>
     request<ContentItem[]>(`/api/documents/${documentId}/contents${page ? `?page=${page}` : ""}`),
   pageImageUrl: (documentId: number, page: number) => `${API_BASE}/api/documents/${documentId}/pages/${page}/image`,
+  listIndexStatuses: (documentIds?: number[]) => {
+    const params = documentIds?.length ? `?${documentIds.map((id) => `document_ids=${id}`).join("&")}` : "";
+    return request<DocumentIndexStatus[]>(`/api/indexing/documents${params}`);
+  },
+  getIndexStatus: (documentId: number) => request<DocumentIndexStatus>(`/api/indexing/documents/${documentId}`),
+  buildDocumentIndex: (documentId: number) => request<DocumentIndexStatus>(`/api/indexing/documents/${documentId}`, { method: "POST" }),
 };
 
 function parseSseBlock(block: string): { event: string; data: unknown } | null {
@@ -89,9 +102,25 @@ function parseSseBlock(block: string): { event: string; data: unknown } | null {
   }
 }
 
+function surfaceIndexReadinessError(body: string) {
+  try {
+    const parsed = JSON.parse(body) as { detail?: { code?: string; message?: string; document_ids?: number[] } };
+    if (parsed.detail?.code !== "DOCUMENTS_NOT_INDEXED") return;
+    window.dispatchEvent(new CustomEvent("book-viewer:index-required", {
+      detail: {
+        message: parsed.detail.message ?? "벡터 DB 구축이 필요한 문서가 있습니다.",
+        documentIds: parsed.detail.document_ids ?? [],
+      },
+    }));
+  } catch {
+    // Non-JSON error bodies are handled by the regular stream error path.
+  }
+}
+
 async function consumeSse(response: Response, handlers: StreamHandlers): Promise<void> {
   if (!response.ok) {
     const body = await response.text();
+    if (response.status === 409) surfaceIndexReadinessError(body);
     throw new Error(`HTTP ${response.status}: ${body.slice(0, 800)}`);
   }
   if (!response.body) throw new Error("Streaming response body is unavailable");
