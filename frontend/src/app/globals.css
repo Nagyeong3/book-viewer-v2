@@ -51,10 +51,15 @@ button { cursor: pointer; }
 .toc-section { min-height: 0; overflow: auto; padding: 12px; }
 .section-label { font-size: 11px; font-weight: 700; color: var(--muted); margin-bottom: 7px; text-transform: uppercase; letter-spacing: .04em; }
 .toc-tree { list-style: none; margin: 0; padding-left: 0; }
-.toc-tree .toc-tree { padding-left: 12px; }
+.toc-tree .toc-tree { padding-left: 16px; }
 .toc-tree li { margin: 1px 0; }
-.toc-tree button { width: 100%; display: grid; grid-template-columns: auto 1fr auto; gap: 6px; align-items: start; border: 0; background: transparent; border-radius: 7px; padding: 5px 6px; text-align: left; font-size: 11px; color: #354052; }
-.toc-tree button:hover { background: #f2f4f7; }
+.toc-row { display: grid; grid-template-columns: 22px minmax(0, 1fr); align-items: start; }
+.toc-tree .toc-toggle { width: 22px; height: 28px; display: grid; place-items: center; border: 0; background: transparent; border-radius: 6px; padding: 0; color: #778195; font-size: 12px; }
+.toc-tree .toc-toggle:hover { background: #eef1f5; color: #344054; }
+.toc-toggle-spacer { width: 22px; height: 28px; }
+.toc-tree .toc-link { width: 100%; display: grid; grid-template-columns: auto 1fr auto; gap: 6px; align-items: start; border: 0; background: transparent; border-radius: 7px; padding: 6px; text-align: left; font-size: 11px; color: #354052; }
+.toc-tree .toc-link:hover { background: #f2f4f7; }
+.toc-tree .toc-link.active { background: var(--accent-soft); color: #2446c7; font-weight: 650; }
 .toc-tree small { color: var(--muted); font-size: 9px; }
 .toc-num { color: #7a8492; min-width: 14px; }
 
