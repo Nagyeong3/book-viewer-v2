@@ -67,6 +67,49 @@
   border-color: rgb(23 32 51 / 10%);
 }
 
+.coordinate-table.table-html {
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  white-space: normal;
+}
+
+.coordinate-table.table-html table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+  background: #fff;
+  color: inherit;
+  font: inherit;
+  line-height: 1.22;
+}
+
+.coordinate-table.table-html th,
+.coordinate-table.table-html td {
+  border: 1px solid #8d97a6;
+  padding: 2px 3px;
+  vertical-align: middle;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.coordinate-table.table-html th {
+  background: #f2f4f7;
+  font-weight: 700;
+  text-align: center;
+}
+
+.coordinate-table.table-html p {
+  margin: 0;
+}
+
+.coordinate-table.table-html-empty {
+  display: grid;
+  place-items: center;
+  color: #8992a2;
+}
+
 .coordinate-cropped-image {
   display: block;
   width: 100%;
