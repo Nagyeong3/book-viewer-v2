@@ -17,6 +17,16 @@ function statusLabel(state: DocumentIndexStatus["state"]) {
   return "미구축";
 }
 
+function DatabaseIcon() {
+  return (
+    <svg className="button-icon" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <ellipse cx="12" cy="5" rx="7" ry="3" />
+      <path d="M5 5v6c0 1.7 3.1 3 7 3s7-1.3 7-3V5" />
+      <path d="M5 11v6c0 1.7 3.1 3 7 3s7-1.3 7-3v-6" />
+    </svg>
+  );
+}
+
 export default function IndexManagementPanel() {
   const [open, setOpen] = useState(false);
   const [documents, setDocuments] = useState<DocumentSummary[]>([]);
@@ -104,8 +114,9 @@ export default function IndexManagementPanel() {
 
       {topbarTarget ? createPortal(
         <button type="button" className="topbar-index-button" onClick={() => setOpen(true)} title="벡터 DB 구축 현황">
-          <span className={`index-dot ${missingCount ? "warning" : "ready"}`} />
+          <DatabaseIcon />
           <span>벡터 DB</span>
+          <span className={`index-dot ${missingCount ? "warning" : "ready"}`} />
           <small>{readyCount}/{documents.length || "-"}</small>
         </button>,
         topbarTarget,
