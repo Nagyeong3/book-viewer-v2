@@ -25,6 +25,8 @@ export type ContentItem = {
   title_num: string | null;
 };
 
+export type TranslationResponse = { translated_text: string; target_language: string };
+
 export type DocumentIndexStatus = {
   document_id: number;
   state: "ready" | "missing" | "queued" | "indexing" | "failed";
@@ -84,6 +86,11 @@ export const api = {
   },
   getIndexStatus: (documentId: number) => request<DocumentIndexStatus>(`/api/indexing/documents/${documentId}`),
   buildDocumentIndex: (documentId: number) => request<DocumentIndexStatus>(`/api/indexing/documents/${documentId}`, { method: "POST" }),
+  translate: (text: string, targetLanguage: string) =>
+    request<TranslationResponse>("/api/translation", {
+      method: "POST",
+      body: JSON.stringify({ text, target_language: targetLanguage }),
+    }),
 };
 
 function parseSseBlock(block: string): { event: string; data: unknown } | null {
