@@ -10,6 +10,7 @@ class Settings(BaseSettings):
 
     app_name: str = "Book Viewer V2"
     app_env: Literal["development", "test", "production"] = "development"
+    app_profile: Literal["real", "mock"] = "real"
     app_host: str = "0.0.0.0"
     app_port: int = Field(default=9056, ge=1, le=65535)
     log_level: str = "INFO"
