@@ -83,27 +83,29 @@ class AppContainer:
                     vector_dimensions=settings.embedding_dimensions,
                 )
 
-            if settings.litellm_base_url and settings.litellm_api_key:
-                llm = LiteLLMProvider(
-                    settings.litellm_base_url,
-                    model=settings.llm_model,
-                    api_key=settings.litellm_api_key,
-                    timeout=settings.llm_timeout,
-                    max_retries=settings.llm_max_retries,
-                    temperature=settings.llm_temperature,
-                    max_tokens=settings.llm_max_tokens,
-                    retry_backoff_factor=settings.llm_retry_backoff_factor,
-                )
+        if settings.litellm_base_url and settings.litellm_api_key:
+            llm = LiteLLMProvider(
+                settings.litellm_base_url,
+                model=settings.llm_model,
+                api_key=settings.litellm_api_key,
+                timeout=settings.llm_timeout,
+                max_retries=settings.llm_max_retries,
+                temperature=settings.llm_temperature,
+                max_tokens=settings.llm_max_tokens,
+                retry_backoff_factor=settings.llm_retry_backoff_factor,
+            )
+            container.llm_provider = llm
+
+            if container.retrieval_service is not None:
                 context_builder = ContextBuilder(max_chars=settings.rag_context_max_chars)
-                container.llm_provider = llm
                 container.rag_service = RagService(
-                    retrieval,
+                    container.retrieval_service,
                     llm,
                     context_builder,
                     default_top_k=settings.rag_top_k,
                 )
                 container.agent_service = AgentService(
-                    retrieval,
+                    container.retrieval_service,
                     llm,
                     context_builder,
                     default_top_k=settings.rag_top_k,
@@ -165,3 +167,10 @@ def get_index_management_service(request: Request) -> IndexManagementService:
             "Index management service is unavailable because PostgreSQL/Elasticsearch/embedding is not configured"
         )
     return container.index_management_service
+
+
+def get_llm_provider(request: Request) -> LiteLLMProvider:
+    container = get_container(request)
+    if container.llm_provider is None:
+        raise RuntimeError("LLM provider is unavailable because LiteLLM is not configured")
+    return container.llm_provider
