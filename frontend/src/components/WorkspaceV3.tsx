@@ -265,7 +265,8 @@ export default function WorkspaceV3() {
     const root = chatLogRef.current;
     if (!root || !chatAutoStickRef.current) return;
     requestAnimationFrame(() => {
-      root.scrollTo({ top: root.scrollHeight, behavior: turns.length ? "smooth" : "auto" });
+      const latest = turns[turns.length - 1];
+      root.scrollTo({ top: root.scrollHeight, behavior: latest?.pending ? "auto" : "smooth" });
     });
   }, [turns.length, turns[turns.length - 1]?.answer.length]);
 
