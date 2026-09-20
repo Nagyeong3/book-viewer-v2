@@ -207,6 +207,19 @@ async def _finish_index(document_id: int) -> None:
         "message": "Mock 벡터 DB 구축 완료",
     }
 
+@router.get("/api/mock/status")
+async def mock_status():
+    return {
+        "profile": "mock",
+        "external_services": {
+            "postgresql": False,
+            "elasticsearch": False,
+            "embedding": False,
+            "llm": False,
+        },
+    }
+
+
 @router.get("/api/documents")
 async def list_documents():
     return DOCUMENTS
