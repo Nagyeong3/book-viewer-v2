@@ -14,6 +14,7 @@ from app.api.mock import router as mock_router
 from app.api.rag import router as rag_router
 from app.api.readiness import router as readiness_router
 from app.api.search import router as search_router
+from app.api.translation import router as translation_router
 from app.api.viewer import router as viewer_router
 from app.core.config import Settings, get_settings
 from app.core.container import AppContainer
@@ -67,6 +68,7 @@ def create_app(
         app.include_router(index_management_router)
         app.include_router(rag_router)
         app.include_router(agent_router)
+        app.include_router(translation_router)
     return app
 
 
