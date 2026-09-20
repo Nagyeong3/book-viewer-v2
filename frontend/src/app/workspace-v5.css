@@ -1819,3 +1819,12 @@ body {
     font-size: 8px;
   }
 }
+
+
+.topbar-index-slot {
+  display: inline-flex;
+  align-items: center;
+  flex: 0 0 auto;
+  color: inherit !important;
+  font-size: inherit !important;
+}
