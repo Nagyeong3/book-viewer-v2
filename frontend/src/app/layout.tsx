@@ -8,6 +8,7 @@ import "./workspace-v3.css";
 import "./workspace-v4.css";
 import "./print-v2.css";
 import "./index-management.css";
+import "./workspace-v5.css";
 
 export const metadata = {
   title: "Book Viewer V2",
