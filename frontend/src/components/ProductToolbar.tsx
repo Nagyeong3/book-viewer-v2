@@ -120,6 +120,17 @@ async function waitForPrintAssets() {
   ]);
 }
 
+function PrintIcon() {
+  return (
+    <svg className="button-icon" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M7 8V4h10v4" />
+      <rect x="5" y="13" width="14" height="7" rx="1.5" />
+      <path d="M5 16H3v-6a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v6h-2" />
+      <path d="M17 11h.01" />
+    </svg>
+  );
+}
+
 export default function ProductToolbar() {
   const [printState, setPrintState] = useState<PrintState>(null);
   const [printStatus, setPrintStatus] = useState("");
@@ -177,7 +188,7 @@ export default function ProductToolbar() {
           disabled={Boolean(printStatus)}
           title="현재 선택한 문서 전체 인쇄"
         >
-          인쇄
+          <PrintIcon /><span>인쇄</span>
         </button>,
         toolbarTarget,
       ) : null}
