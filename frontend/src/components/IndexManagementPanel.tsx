@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { createPortal } from "react-dom";
 
 import { api, DocumentIndexStatus, DocumentSummary } from "../lib/api";
 
@@ -24,6 +25,7 @@ export default function IndexManagementPanel() {
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
   const [attentionIds, setAttentionIds] = useState<number[]>([]);
+  const [topbarTarget, setTopbarTarget] = useState<HTMLElement | null>(null);
 
   const refresh = useCallback(async () => {
     setLoading(true);
@@ -31,6 +33,7 @@ export default function IndexManagementPanel() {
       const [docs, indexStatuses] = await Promise.all([api.listDocuments(), api.listIndexStatuses()]);
       setDocuments(docs);
       setStatuses(Object.fromEntries(indexStatuses.map((item) => [item.document_id, item])));
+      window.dispatchEvent(new CustomEvent("book-viewer:index-status-changed"));
       setError("");
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : String(cause));
@@ -42,6 +45,14 @@ export default function IndexManagementPanel() {
   useEffect(() => {
     void refresh();
   }, [refresh]);
+
+  useEffect(() => {
+    const locate = () => setTopbarTarget(document.querySelector<HTMLElement>(".topbar-actions"));
+    locate();
+    const observer = new MutationObserver(locate);
+    observer.observe(document.body, { childList: true, subtree: true });
+    return () => observer.disconnect();
+  }, []);
 
   useEffect(() => {
     const onIndexRequired = (event: Event) => {
@@ -71,6 +82,7 @@ export default function IndexManagementPanel() {
     try {
       const next = await api.buildDocumentIndex(documentId);
       setStatuses((current) => ({ ...current, [documentId]: next }));
+      window.dispatchEvent(new CustomEvent("book-viewer:index-status-changed"));
       setNotice(`Document #${documentId} 벡터 DB 구축을 시작했습니다.`);
       setError("");
     } catch (cause) {
@@ -90,11 +102,14 @@ export default function IndexManagementPanel() {
         </div>
       ) : null}
 
-      <button type="button" className="index-manager-trigger" onClick={() => setOpen(true)}>
-        <span className={`index-dot ${missingCount ? "warning" : "ready"}`} />
-        <span>벡터 DB</span>
-        <small>{readyCount}/{documents.length || "-"}</small>
-      </button>
+      {topbarTarget ? createPortal(
+        <button type="button" className="topbar-index-button" onClick={() => setOpen(true)} title="벡터 DB 구축 현황">
+          <span className={`index-dot ${missingCount ? "warning" : "ready"}`} />
+          <span>벡터 DB</span>
+          <small>{readyCount}/{documents.length || "-"}</small>
+        </button>,
+        topbarTarget,
+      ) : null}
 
       {open ? (
         <div className="index-manager-backdrop" role="presentation" onMouseDown={(event) => { if (event.currentTarget === event.target) setOpen(false); }}>
