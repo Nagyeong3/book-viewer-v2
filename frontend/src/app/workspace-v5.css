@@ -1619,3 +1619,203 @@ body {
     max-width: 86px;
   }
 }
+
+
+/* Search is scoped to AI-selected documents and lives in global chrome. */
+.scope-search-control {
+  position: relative;
+  width: 240px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 9px;
+  border: 1px solid var(--fp-line);
+  border-radius: 9px;
+  background: #fff;
+  color: #687386;
+}
+
+.scope-search-control:focus-within {
+  border-color: #b8c6ff;
+  box-shadow: 0 0 0 3px rgba(49,94,251,.07);
+}
+
+.scope-search-control input {
+  width: 100%;
+  min-width: 0;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: #172033;
+  font: inherit;
+  font-size: 9px;
+}
+
+.scope-search-control input::placeholder {
+  color: #98a2b3;
+}
+
+.scope-search-control input:disabled {
+  cursor: not-allowed;
+  color: #98a2b3;
+}
+
+.scope-search-results {
+  position: absolute;
+  top: calc(100% + 7px);
+  left: 0;
+  z-index: 90;
+  width: 360px;
+  max-height: 360px;
+  overflow: auto;
+  padding: 6px;
+  border: 1px solid #dce3ed;
+  border-radius: 11px;
+  background: #fff;
+  box-shadow: 0 18px 44px rgba(23,32,51,.16);
+}
+
+.scope-search-results button {
+  width: 100%;
+  display: grid;
+  grid-template-columns: minmax(0,1fr) auto;
+  gap: 10px;
+  align-items: center;
+  padding: 9px 10px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: #344054;
+  text-align: left;
+  cursor: pointer;
+}
+
+.scope-search-results button:hover {
+  background: #f5f7fb;
+}
+
+.scope-search-results button > span {
+  min-width: 0;
+  display: grid;
+  gap: 2px;
+  color: inherit;
+}
+
+.scope-search-results strong {
+  overflow: hidden;
+  color: #2d3748;
+  font-size: 9px;
+  font-weight: 650;
+  line-height: 1.4;
+}
+
+.scope-search-results small {
+  overflow: hidden;
+  color: #8a94a3;
+  font-size: 8px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.scope-search-results em {
+  color: #667085;
+  font-size: 8px;
+  font-style: normal;
+}
+
+.scope-search-empty {
+  padding: 14px 10px;
+  color: #8a94a3;
+  font-size: 8px;
+  text-align: center;
+}
+
+/* Translation popup is a movable floating tool window. */
+.workspace-v3 .translation-panel {
+  position: fixed;
+  right: auto;
+  bottom: auto;
+  z-index: 140;
+  width: min(440px, calc(100vw - 48px));
+  max-height: min(430px, calc(100vh - 80px));
+}
+
+.workspace-v3 .translation-panel header {
+  cursor: move;
+  user-select: none;
+  touch-action: none;
+}
+
+.workspace-v3 .translation-panel header > div {
+  min-width: 0;
+}
+
+.workspace-v3 .translation-panel header small {
+  margin-left: 3px;
+  color: #98a2b3;
+  font-size: 8px;
+  font-weight: 500;
+}
+
+/* Translation is click-triggered; hover only communicates clickability. */
+.workspace-v3 .coordinate-block.translation-target {
+  cursor: pointer;
+}
+
+.workspace-v3 .coordinate-block.translation-target:hover {
+  border-color: #7694ff;
+  background: rgba(238,243,255,.28);
+  box-shadow: 0 0 0 2px rgba(49,94,251,.08);
+}
+
+/* Vector DB action must inherit no legacy topbar gray text. */
+.topbar .topbar-index-button,
+.topbar .topbar-index-button > span,
+.topbar .topbar-index-button > small,
+.topbar .topbar-index-button .button-icon {
+  color: #172033 !important;
+}
+
+.topbar .topbar-index-button {
+  font-family: inherit !important;
+  font-size: 10px !important;
+  font-weight: 600 !important;
+  opacity: 1 !important;
+}
+
+.topbar .topbar-index-button > span {
+  font-size: 10px !important;
+  font-weight: 600 !important;
+}
+
+.topbar .topbar-index-button > small {
+  font-size: 9px !important;
+  font-weight: 600 !important;
+}
+
+/* Current-document search was retired in favor of selected-scope search. */
+.workspace-v3 .viewer-search-control,
+.workspace-v3 .viewer-search-results {
+  display: none !important;
+}
+
+@media (max-width: 1500px) {
+  .scope-search-control {
+    width: 205px;
+  }
+
+  .scope-search-results {
+    width: 330px;
+  }
+}
+
+@media (max-width: 1250px) {
+  .scope-search-control {
+    width: 180px;
+  }
+
+  .scope-search-control input {
+    font-size: 8px;
+  }
+}
