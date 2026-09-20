@@ -342,6 +342,35 @@ async def agent_stream(payload: dict[str, Any]) -> StreamingResponse:
         headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
     )
 
+@router.post("/api/translation")
+async def mock_translate(payload: dict[str, Any]):
+    text = str(payload.get("text", "")).strip()
+    target = str(payload.get("target_language", "en"))
+    if not text:
+        raise HTTPException(status_code=422, detail="text is required")
+    labels = {
+        "en": "English",
+        "ja": "日本語",
+        "zh-CN": "简体中文",
+        "zh-TW": "繁體中文",
+        "es": "Español",
+        "fr": "Français",
+        "de": "Deutsch",
+    }
+    language = labels.get(target, target)
+    samples = {
+        "en": f"[Mock {language}] {text}",
+        "ja": f"[Mock {language}] {text}",
+        "zh-CN": f"[Mock {language}] {text}",
+        "zh-TW": f"[Mock {language}] {text}",
+        "es": f"[Mock {language}] {text}",
+        "fr": f"[Mock {language}] {text}",
+        "de": f"[Mock {language}] {text}",
+    }
+    await asyncio.sleep(0.35)
+    return {"translated_text": samples.get(target, f"[Mock {language}] {text}"), "target_language": target}
+
+
 @router.get("/mock-assets/{path:path}")
 async def mock_asset(path: str) -> Response:
     if path.startswith("cropped/"):
