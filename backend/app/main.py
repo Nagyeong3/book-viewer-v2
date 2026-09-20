@@ -10,6 +10,7 @@ from app.api.errors import register_exception_handlers
 from app.api.health import router as health_router
 from app.api.index_management import router as index_management_router
 from app.api.middleware import register_request_middleware
+from app.api.mock import router as mock_router
 from app.api.rag import router as rag_router
 from app.api.readiness import router as readiness_router
 from app.api.search import router as search_router
@@ -58,11 +59,14 @@ def create_app(
     register_exception_handlers(app)
     app.include_router(health_router)
     app.include_router(readiness_router)
-    app.include_router(viewer_router)
-    app.include_router(search_router)
-    app.include_router(index_management_router)
-    app.include_router(rag_router)
-    app.include_router(agent_router)
+    if resolved_settings.app_profile == "mock":
+        app.include_router(mock_router)
+    else:
+        app.include_router(viewer_router)
+        app.include_router(search_router)
+        app.include_router(index_management_router)
+        app.include_router(rag_router)
+        app.include_router(agent_router)
     return app
 
 
