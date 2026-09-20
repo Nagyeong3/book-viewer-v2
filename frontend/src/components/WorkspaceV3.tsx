@@ -267,7 +267,7 @@ export default function WorkspaceV3() {
     requestAnimationFrame(() => {
       root.scrollTo({ top: root.scrollHeight, behavior: turns.length ? "smooth" : "auto" });
     });
-  }, [turns.length, latestTurn?.answer.length]);
+  }, [turns.length, turns[turns.length - 1]?.answer.length]);
 
   useEffect(() => {
     api.listDocuments().then((items) => {
