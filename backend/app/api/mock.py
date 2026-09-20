@@ -61,7 +61,17 @@ TOC = {
                     "title_num": "2.1",
                     "page": 4,
                     "order_index": 11,
-                    "children": [],
+                    "children": [
+                        {
+                            "id": 1012,
+                            "text": "운용 종료",
+                            "doc_level": 3,
+                            "title_num": "2.1.1",
+                            "page": 5,
+                            "order_index": 12,
+                            "children": [],
+                        }
+                    ],
                 }
             ],
         },
@@ -305,6 +315,7 @@ async def _stream_answer(document_ids: list[int], *, agent: bool, question: str,
 @router.post("/api/rag/stream")
 async def rag_stream(payload: dict[str, Any]) -> StreamingResponse:
     document_ids = [int(value) for value in payload.get("document_ids", [])]
+    _ensure_ready(document_ids)
     return StreamingResponse(
         _stream_answer(
             document_ids,
@@ -319,6 +330,7 @@ async def rag_stream(payload: dict[str, Any]) -> StreamingResponse:
 @router.post("/api/agent/stream")
 async def agent_stream(payload: dict[str, Any]) -> StreamingResponse:
     document_ids = [int(value) for value in payload.get("document_ids", [])]
+    _ensure_ready(document_ids)
     return StreamingResponse(
         _stream_answer(
             document_ids,
