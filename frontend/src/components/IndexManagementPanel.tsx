@@ -57,7 +57,7 @@ export default function IndexManagementPanel() {
   }, [refresh]);
 
   useEffect(() => {
-    const locate = () => setTopbarTarget(document.querySelector<HTMLElement>(".topbar-actions"));
+    const locate = () => setTopbarTarget(document.querySelector<HTMLElement>(".topbar-index-slot"));
     locate();
     const observer = new MutationObserver(locate);
     observer.observe(document.body, { childList: true, subtree: true });
