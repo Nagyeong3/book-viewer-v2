@@ -33,6 +33,9 @@ class AppContainer:
     @classmethod
     async def start(cls, settings: Settings) -> "AppContainer":
         container = cls(settings=settings)
+        if settings.app_profile == "mock":
+            return container
+
         if settings.database_url:
             pool = await PostgresPool.connect(
                 settings.database_url,
