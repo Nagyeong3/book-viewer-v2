@@ -599,3 +599,115 @@ body {
     display: none !important;
   }
 }
+
+
+/* Stable grid placement: hidden side panels must not reflow the viewer into zero-width tracks. */
+.workspace-v3 .document-pane { grid-column: 1; }
+.workspace-v3 .toc-resize-handle { grid-column: 2; }
+.workspace-v3 .viewer-pane { grid-column: 3; }
+.workspace-v3 .chat-resize-handle { grid-column: 4; }
+.workspace-v3 .chat-pane { grid-column: 5; }
+
+/* Productized document readiness states */
+.workspace-v3 .document-title-line {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.workspace-v3 .document-title-line strong {
+  min-width: 0;
+  flex: 1;
+}
+
+.workspace-v3 .document-index-badge {
+  display: inline-flex;
+  align-items: center;
+  flex: 0 0 auto;
+  min-height: 18px;
+  padding: 0 6px;
+  border-radius: 999px;
+  font-size: 7px;
+  font-weight: 750;
+  letter-spacing: -.01em;
+}
+
+.workspace-v3 .document-index-badge.ready {
+  background: #eaf8f1;
+  color: #18794e;
+}
+
+.workspace-v3 .document-index-badge.running {
+  background: #eef3ff;
+  color: #315efb;
+}
+
+.workspace-v3 .document-index-badge.missing {
+  background: #fff4df;
+  color: #a76508;
+}
+
+/* Vector DB status now belongs to global product chrome, not over the composer. */
+.topbar-index-button {
+  min-height: 30px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 10px;
+  border: 1px solid var(--fp-line);
+  border-radius: 9px;
+  background: #fff;
+  color: #435067;
+  font: inherit;
+  font-size: 10px;
+  cursor: pointer;
+}
+
+.topbar-index-button:hover {
+  border-color: #c8d3e4;
+  background: #f8faff;
+}
+
+.topbar-index-button small {
+  padding-left: 2px;
+  color: #8b95a4;
+  font-size: 8px;
+}
+
+/* Legacy floating entry point is intentionally retired. */
+.index-manager-trigger {
+  display: none !important;
+}
+
+/* Slightly stronger hierarchy for a sellable app feel */
+.workspace-v3 .source-dock-heading {
+  align-items: center;
+}
+
+.workspace-v3 .source-strip {
+  gap: 6px;
+}
+
+.workspace-v3 .source-strip button {
+  min-height: 54px;
+}
+
+.workspace-v3 .question-form textarea:disabled {
+  background: #f3f5f8;
+  color: #98a1af;
+}
+
+@media (max-width: 1180px) {
+  .workspace-v3 .document-pane { grid-column: 1; }
+  .workspace-v3 .viewer-pane { grid-column: 3; }
+  .workspace-v3 .chat-pane { grid-column: 1 / -1; }
+}
+
+@media (max-width: 760px) {
+  .workspace-v3 .document-pane,
+  .workspace-v3 .viewer-pane,
+  .workspace-v3 .chat-pane {
+    grid-column: auto;
+  }
+}
