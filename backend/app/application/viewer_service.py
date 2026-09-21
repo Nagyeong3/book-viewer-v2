@@ -104,6 +104,7 @@ class ViewerService:
             bbox=item.bbox,
             title_num=title_num,
             doc_image_path=item.doc_image_path,
+            translations=item.translations,
         )
 
     @staticmethod
