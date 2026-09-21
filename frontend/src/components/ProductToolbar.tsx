@@ -27,8 +27,8 @@ function activeDocumentFromDom(): { id: number; title: string } | null {
 }
 
 function headingTag(level: number | null) {
-  const normalized = Math.min(Math.max(level ?? 3, 1), 6);
-  return `h${normalized}` as "h1" | "h2" | "h3" | "h4" | "h5" | "h6";
+  const normalized = Math.min(Math.max((level ?? 3) + 1, 2), 6);
+  return `h${normalized}` as "h2" | "h3" | "h4" | "h5" | "h6";
 }
 
 function PrintBlock({ item }: { item: ContentItem }) {
