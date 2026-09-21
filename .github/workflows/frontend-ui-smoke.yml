@@ -1,0 +1,101 @@
+name: Frontend UI smoke
+
+on:
+  push:
+    branches:
+      - "work/**"
+    paths:
+      - "frontend/**"
+      - "backend/app/api/mock.py"
+      - ".github/workflows/frontend-ui-smoke.yml"
+  workflow_dispatch:
+
+jobs:
+  ui-smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install backend
+        run: python -m pip install -e backend
+
+      - name: Install frontend
+        working-directory: frontend
+        run: npm install --no-audit --no-fund
+
+      - name: Install Playwright
+        working-directory: frontend
+        run: |
+          npm install --no-save playwright@1.55.0
+          npx playwright install --with-deps chromium
+
+      - name: Typecheck frontend
+        working-directory: frontend
+        run: npm run typecheck
+
+      - name: Build frontend
+        working-directory: frontend
+        env:
+          NEXT_PUBLIC_API_BASE_URL: http://127.0.0.1:9056
+          NEXT_PUBLIC_SEAWEEDFS_FILER_URL: http://127.0.0.1:9056/mock-assets
+        run: npm run build
+
+      - name: Start mock backend
+        working-directory: backend
+        env:
+          APP_PROFILE: mock
+          CORS_ALLOWED_ORIGINS: http://127.0.0.1:3000,http://localhost:3000
+        run: |
+          nohup python -m uvicorn app.main:app --host 127.0.0.1 --port 9056 >/tmp/book-viewer-backend.log 2>&1 &
+          for i in {1..30}; do
+            curl -fsS http://127.0.0.1:9056/api/mock/status && exit 0
+            sleep 1
+          done
+          cat /tmp/book-viewer-backend.log
+          exit 1
+
+      - name: Start production frontend
+        working-directory: frontend
+        env:
+          HOSTNAME: 127.0.0.1
+          PORT: "3000"
+        run: |
+          nohup npm start -- -H 127.0.0.1 -p 3000 >/tmp/book-viewer-frontend.log 2>&1 &
+          for i in {1..45}; do
+            curl -fsS http://127.0.0.1:3000 >/dev/null && exit 0
+            sleep 1
+          done
+          cat /tmp/book-viewer-frontend.log
+          exit 1
+
+      - name: Run UI smoke and capture screenshots
+        working-directory: frontend
+        env:
+          UI_BASE_URL: http://127.0.0.1:3000
+        run: node scripts/ui-smoke.mjs
+
+      - name: Upload UI evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-ui-smoke
+          path: frontend/ui-artifacts
+          if-no-files-found: warn
+          retention-days: 7
+
+      - name: Show service logs on failure
+        if: failure()
+        run: |
+          echo "=== backend ==="
+          cat /tmp/book-viewer-backend.log || true
+          echo "=== frontend ==="
+          cat /tmp/book-viewer-frontend.log || true
