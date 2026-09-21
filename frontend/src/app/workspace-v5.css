@@ -2145,3 +2145,106 @@ body {
 .workspace-v3 .viewer-status {
   padding-left: 2px;
 }
+
+
+/* Stored full-document translation controls */
+.workspace-v3 .full-translate-controls {
+  padding-right: 7px;
+  margin-right: 1px;
+  border-right: 1px solid #e3e8ef;
+}
+
+.workspace-v3 .full-translate-controls .translate-toggle.active {
+  border-color: #b9c8ff;
+  background: #eef3ff;
+  color: #2446c7;
+}
+
+.workspace-v3 .full-translate-controls select {
+  display: block;
+}
+
+/* Keep zoom anchored to the viewport center; frames may exceed viewport width. */
+.workspace-v3 .chapter-page-frame {
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* Translation tool window can be resized and then dragged using its header. */
+.workspace-v3 .translation-panel {
+  min-width: 320px;
+  min-height: 240px;
+  max-width: calc(100vw - 16px);
+  max-height: calc(100vh - 16px);
+  resize: both;
+  overflow: auto;
+}
+
+.workspace-v3 .translation-panel header {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  background: rgba(255,255,255,.985);
+}
+
+.workspace-v3 .translation-source,
+.workspace-v3 .translation-result {
+  overflow: auto;
+}
+
+.workspace-v3 .translation-result {
+  min-height: 90px;
+}
+
+.workspace-v3 .translation-panel::after {
+  content: "";
+  position: absolute;
+  right: 4px;
+  bottom: 4px;
+  width: 8px;
+  height: 8px;
+  border-right: 1px solid #aeb7c4;
+  border-bottom: 1px solid #aeb7c4;
+  pointer-events: none;
+}
+
+/* Detailed Agentic trace */
+.workspace-v3 .agent-step-list li.running > div strong {
+  color: #2446c7;
+}
+
+.workspace-v3 .agent-step-list li em {
+  display: block;
+  margin-top: 5px;
+  padding: 5px 7px;
+  border-radius: 6px;
+  background: #f3f5f8;
+  color: #687386;
+  font-size: 9px;
+  font-style: normal;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+
+.workspace-v3 .agent-step-list li.running em {
+  background: #eef3ff;
+  color: #3d59b8;
+}
+
+.workspace-v3 .process-overview small {
+  font-variant-numeric: tabular-nums;
+}
+
+@media (max-width: 1440px) {
+  .workspace-v3 .viewer-toolbar {
+    gap: 6px;
+  }
+
+  .workspace-v3 .translate-controls select {
+    max-width: 92px;
+  }
+
+  .workspace-v3 .translate-toggle {
+    padding-inline: 7px;
+  }
+}
