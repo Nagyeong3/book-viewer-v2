@@ -23,6 +23,7 @@ export type ContentItem = {
   cropped_image_path: string | null;
   bbox: { xmin: number; ymin: number; xmax: number; ymax: number } | null;
   title_num: string | null;
+  translations: Record<string, string> | null;
 };
 
 export type TranslationResponse = { translated_text: string; target_language: string };
