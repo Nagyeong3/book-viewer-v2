@@ -119,6 +119,15 @@ def item(
         "doc_image_path": f"origin/page_{page:03d}.svg",
         "bbox": bbox,
         "title_num": title_num,
+        "translations": (
+            {
+                "en": f"[EN] {text}",
+                "fil": f"[FIL] {text}",
+                "pl": f"[PL] {text}",
+            }
+            if text and content_type not in {"image", "table"}
+            else None
+        ),
     }
 
 CONTENTS = {
@@ -310,19 +319,83 @@ async def agent_query(payload: dict[str, Any]):
 async def _stream_answer(document_ids: list[int], *, agent: bool, question: str, top_k: int) -> AsyncIterator[str]:
     _ensure_ready(document_ids)
     if agent:
-        yield _sse(
-            "plan",
-            {
-                "tool": "hybrid_search",
-                "query": question,
-                "top_k": top_k,
-                "rationale": "Mock 환경에서 Hybrid 검색을 선택했습니다.",
-            },
-        )
-    yield _sse("sources", _sources(document_ids))
+        plan = {
+            "tool": "hybrid_search",
+            "query": question,
+            "top_k": top_k,
+            "rationale": "Mock 환경에서 Hybrid 검색을 우선 선택했습니다.",
+        }
+        yield _sse("step", {
+            "id": "analyze",
+            "title": "질문 분석 및 계획",
+            "status": "running",
+            "detail": "질문 의도를 분석하고 있습니다.",
+        })
+        await asyncio.sleep(0.15)
+        yield _sse("plan", plan)
+        yield _sse("step", {
+            "id": "analyze",
+            "title": "질문 분석 및 계획",
+            "status": "done",
+            "detail": plan["rationale"],
+            "tool": plan["tool"],
+            "query": plan["query"],
+        })
+        yield _sse("step", {
+            "id": "retrieve-1",
+            "title": "1차 문서 검색",
+            "status": "running",
+            "detail": "Hybrid 검색을 실행합니다.",
+            "tool": "hybrid_search",
+            "query": question,
+        })
+        await asyncio.sleep(0.15)
+
+    sources = _sources(document_ids)
+    if agent:
+        yield _sse("step", {
+            "id": "retrieve-1",
+            "title": "1차 문서 검색",
+            "status": "done",
+            "detail": f"{len(sources)}개 근거 후보 확보",
+            "tool": "hybrid_search",
+            "query": question,
+        })
+        yield _sse("step", {
+            "id": "evaluate",
+            "title": "근거 적합성 검토",
+            "status": "running",
+            "detail": "검색 결과가 질문에 충분한지 검토합니다.",
+        })
+        await asyncio.sleep(0.15)
+        yield _sse("step", {
+            "id": "evaluate",
+            "title": "근거 적합성 검토",
+            "status": "done",
+            "detail": "Mock 근거가 충분하다고 판단했습니다.",
+            "decision": "sufficient",
+        })
+
+    yield _sse("sources", sources)
+    if agent:
+        yield _sse("step", {
+            "id": "answer",
+            "title": "근거 기반 답변 생성",
+            "status": "running",
+            "detail": f"{len(sources)}개 근거를 바탕으로 응답을 생성합니다.",
+        })
+
     for token in ["Mock ", "오프라인 ", "환경에서 ", "스트리밍되는 ", "답변입니다. ", "실환경 연동 없이 UI를 개발할 수 있습니다."]:
         await asyncio.sleep(0.12)
         yield _sse("token", token)
+
+    if agent:
+        yield _sse("step", {
+            "id": "answer",
+            "title": "근거 기반 답변 생성",
+            "status": "done",
+            "detail": "답변 생성 완료",
+        })
     yield _sse("done", {"ok": True})
 
 @router.post("/api/rag/stream")
