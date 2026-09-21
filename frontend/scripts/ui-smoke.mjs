@@ -103,6 +103,11 @@ try {
   report.checks.zoomPreservesViewportCentre = true;
   await page.screenshot({ path: path.join(outputDir, "ui-zoom-120-1600x1000.png"), fullPage: false });
 
+  // Return to the default 100% zoom before the final product-layout screenshots.
+  await page.getByRole("button", { name: "축소" }).click();
+  await page.getByRole("button", { name: "축소" }).click();
+  await page.waitForTimeout(350);
+
   await page.setViewportSize({ width: 1366, height: 768 });
   await page.waitForTimeout(350);
   const compactMetrics = await page.evaluate(() => ({
