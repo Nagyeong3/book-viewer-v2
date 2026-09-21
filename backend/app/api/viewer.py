@@ -40,6 +40,7 @@ class ContentResponse(BaseModel):
     doc_image_path: str | None
     bbox: BoundingBoxResponse | None
     title_num: str | None
+    translations: dict[str, str] | None = None
 
 
 class TocNodeResponse(BaseModel):
