@@ -28,6 +28,7 @@ class ContentItem:
     cropped_image_path: str | None
     bbox: BoundingBox | None
     doc_image_path: str | None = None
+    translations: dict[str, str] | None = None
 
 
 @dataclass(slots=True)
@@ -44,6 +45,7 @@ class ViewerContent:
     bbox: BoundingBox | None
     title_num: str | None = None
     doc_image_path: str | None = None
+    translations: dict[str, str] | None = None
 
 
 @dataclass(slots=True)
