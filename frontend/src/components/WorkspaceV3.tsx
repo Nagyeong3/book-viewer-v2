@@ -13,6 +13,7 @@ import {
 
 import {
   AgentPlan,
+  AgentStep,
   api,
   ContentItem,
   DocumentIndexStatus,
@@ -27,7 +28,7 @@ import TableHtml from "./TableHtml";
 
 type Mode = "agent" | "rag";
 type AssistantTab = "assistant" | "process";
-type ChatTurn = { id: number; question: string; answer: string; sources: RagSource[]; plan?: AgentPlan; pending: boolean; error?: string };
+type ChatTurn = { id: number; question: string; answer: string; sources: RagSource[]; plan?: AgentPlan; steps?: AgentStep[]; pending: boolean; error?: string };
 type LayoutState = { tocWidth: number; chatWidth: number; tocCollapsed: boolean; chatCollapsed: boolean };
 type PageSize = { width: number; height: number };
 type ChapterRange = { id: number; title: string; startPage: number; endPage: number };
@@ -99,8 +100,8 @@ function chapterForPage(toc: TocNode[], page: number): ChapterRange {
   return { id: -page, title: "문서", startPage: page, endPage: page };
 }
 
-function SemanticBlock({ item }: { item: ContentItem }) {
-  const text = item.text?.trim();
+function SemanticBlock({ item, textOverride }: { item: ContentItem; textOverride?: string | null }) {
+  const text = (textOverride ?? item.text)?.trim();
   if (item.content_type === "title" || item.content_type === "sub_title") {
     return createElement(headingTag(item.doc_level), { className: `semantic-heading semantic-heading-${clamp(item.doc_level ?? 3, 1, 6)}` }, text || "제목");
   }
@@ -122,6 +123,8 @@ function DocumentPage({
   focusContentId,
   zoom,
   translationEnabled,
+  fullTranslationEnabled,
+  fullTranslationLanguage,
   onTranslate,
 }: {
   page: number;
@@ -130,6 +133,8 @@ function DocumentPage({
   focusContentId: number | null;
   zoom: number;
   translationEnabled: boolean;
+  fullTranslationEnabled: boolean;
+  fullTranslationLanguage: string;
   onTranslate: (item: ContentItem) => void;
 }) {
   const positioned = contents.filter((item) => item.bbox && item.page === page);
@@ -153,7 +158,14 @@ function DocumentPage({
                 if (translationEnabled && item.text?.trim() && item.content_type !== "image") onTranslate(item);
               }}
             >
-              <SemanticBlock item={item} />
+              <SemanticBlock
+                item={item}
+                textOverride={fullTranslationEnabled
+                  ? (item.content_type === "table"
+                      ? (item.translations?.[fullTranslationLanguage]?.trim().startsWith("<table") ? item.translations?.[fullTranslationLanguage] : item.text)
+                      : item.translations?.[fullTranslationLanguage] ?? item.text)
+                  : item.text}
+              />
             </div>
           );
         })}
@@ -260,6 +272,8 @@ export default function WorkspaceV3() {
   const [turns, setTurns] = useState<ChatTurn[]>([]);
   const [startupError, setStartupError] = useState("");
   const [viewerZoom, setViewerZoom] = useState(100);
+  const [fullTranslationEnabled, setFullTranslationEnabled] = useState(false);
+  const [fullTranslationLanguage, setFullTranslationLanguage] = useState("en");
   const [scopeSearchQuery, setScopeSearchQuery] = useState("");
   const [scopeSearchResults, setScopeSearchResults] = useState<ScopeSearchResult[]>([]);
   const [translationEnabled, setTranslationEnabled] = useState(false);
@@ -280,6 +294,7 @@ export default function WorkspaceV3() {
   const chatAutoStickRef = useRef(true);
   const translationCacheRef = useRef(new Map<string, string>());
   const translationRequestRef = useRef<string | null>(null);
+  const translationPanelRef = useRef<HTMLElement | null>(null);
 
   useEffect(() => {
     try {
@@ -579,6 +594,26 @@ export default function WorkspaceV3() {
     }
   }
 
+  const availableTranslationLanguages = useMemo(() => {
+    const discovered = new Set<string>(["en", "fil", "pl"]);
+    Object.values(pageContents).flat().forEach((item) => {
+      Object.keys(item.translations ?? {}).forEach((code) => discovered.add(code));
+    });
+    return Array.from(discovered);
+  }, [pageContents]);
+
+  const languageLabel = (code: string) => ({
+    en: "English",
+    fil: "Filipino",
+    pl: "Polski",
+    ja: "日本語",
+    "zh-CN": "简体中文",
+    "zh-TW": "繁體中文",
+    es: "Español",
+    fr: "Français",
+    de: "Deutsch",
+  }[code] ?? code);
+
   const activeDocument = useMemo(() => documents.find((document) => document.id === activeDocumentId) ?? null, [documents, activeDocumentId]);
   const latestTurn = turns.length ? turns[turns.length - 1] : undefined;
   const filteredDocuments = useMemo(() => {
@@ -671,8 +706,9 @@ export default function WorkspaceV3() {
     const origin = translationPanelPosition;
 
     const onMove = (moveEvent: globalThis.PointerEvent) => {
-      const panelWidth = Math.min(440, Math.max(320, window.innerWidth - 48));
-      const panelHeight = Math.min(430, Math.max(260, window.innerHeight - 80));
+      const rect = translationPanelRef.current?.getBoundingClientRect();
+      const panelWidth = rect?.width ?? Math.min(440, Math.max(320, window.innerWidth - 48));
+      const panelHeight = rect?.height ?? Math.min(430, Math.max(260, window.innerHeight - 80));
       setTranslationPanelPosition({
         x: clamp(origin.x + (moveEvent.clientX - startX), 8, Math.max(8, window.innerWidth - panelWidth - 8)),
         y: clamp(origin.y + (moveEvent.clientY - startY), 8, Math.max(8, window.innerHeight - panelHeight - 8)),
@@ -684,6 +720,19 @@ export default function WorkspaceV3() {
     };
     window.addEventListener("pointermove", onMove);
     window.addEventListener("pointerup", onUp);
+  }
+
+  function changeViewerZoom(delta: number) {
+    const root = viewerRef.current;
+    const centerXRatio = root && root.scrollWidth ? (root.scrollLeft + root.clientWidth / 2) / root.scrollWidth : 0.5;
+    const centerYRatio = root && root.scrollHeight ? (root.scrollTop + root.clientHeight / 2) / root.scrollHeight : 0.5;
+    setViewerZoom((current) => clamp(current + delta, 60, 160));
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+      const next = viewerRef.current;
+      if (!next) return;
+      next.scrollLeft = Math.max(0, centerXRatio * next.scrollWidth - next.clientWidth / 2);
+      next.scrollTop = Math.max(0, centerYRatio * next.scrollHeight - next.clientHeight / 2);
+    }));
   }
 
   function beginResize(side: "toc" | "chat", event: ReactPointerEvent<HTMLDivElement>) {
@@ -715,6 +764,15 @@ export default function WorkspaceV3() {
 
     const handlers = {
       onPlan: (plan: AgentPlan) => setTurns((current) => current.map((turn) => turn.id === id ? { ...turn, plan } : turn)),
+      onStep: (step: AgentStep) => setTurns((current) => current.map((turn) => {
+        if (turn.id !== id) return turn;
+        const existing = turn.steps ?? [];
+        const index = existing.findIndex((item) => item.id === step.id);
+        const steps = index >= 0
+          ? existing.map((item, stepIndex) => stepIndex === index ? step : item)
+          : [...existing, step];
+        return { ...turn, steps };
+      })),
       onSources: (sources: RagSource[]) => setTurns((current) => current.map((turn) => turn.id === id ? { ...turn, sources } : turn)),
       onToken: (token: string) => setTurns((current) => current.map((turn) => turn.id === id ? { ...turn, answer: turn.answer + token } : turn)),
       onDone: () => setTurns((current) => current.map((turn) => turn.id === id ? { ...turn, pending: false } : turn)),
@@ -742,9 +800,9 @@ export default function WorkspaceV3() {
       <section className="workspace-grid" style={gridStyle}>
         <aside className={`document-pane panel ${layout.tocCollapsed ? "collapsed" : ""}`}><div className="panel-heading compact-heading"><div><span className="panel-eyebrow">LIBRARY</span><h2>문서 탐색</h2><p>열람 문서와 AI 검색 범위를 관리합니다.</p></div><button type="button" className="icon-button icon-button-back" aria-label="목차 접기" title="목차 접기" onClick={() => setLayout((current) => ({ ...current, tocCollapsed: true }))}><UiIcon name="chevron" size={13} /></button></div><div className="document-picker polished-picker"><input className="document-search" value={documentQuery} onChange={(event) => setDocumentQuery(event.target.value)} placeholder="문서명 또는 ID 검색" /><div className="scope-toolbar"><div><strong>AI 검색 범위</strong><span>{selectedIds.length}개 문서 선택</span></div><div><button type="button" onClick={selectAllDocuments} disabled={selectedIds.length === documents.length && documents.length > 0}>전체 선택</button><button type="button" onClick={clearDocumentScope} disabled={!selectedIds.length}>전체 해제</button></div></div><div className="document-list document-list-large">{filteredDocuments.map((document) => { const selected = selectedIds.includes(document.id); const active = activeDocumentId === document.id; const indexStatus = indexStatuses[document.id]; const ready = indexStatus?.state === "ready"; const running = indexStatus?.state === "queued" || indexStatus?.state === "indexing"; return <div key={document.id} className={`document-list-row ${active ? "active-row" : ""}`}><button type="button" className={`scope-checkbox ${selected ? "checked" : ""}`} aria-pressed={selected} aria-label={`${document.title} AI 검색 범위 ${selected ? "제외" : "포함"}`} onClick={() => toggleDocumentScope(document.id)}><span className="checkbox-mark">{selected ? "✓" : ""}</span></button><button type="button" className={`document-item ${active ? "active" : ""}`} onClick={() => openDocument(document.id)}><span className="document-copy"><span className="document-title-line"><strong>{document.title}</strong><span className={`document-index-badge ${ready ? "ready" : running ? "running" : "missing"}`}>{ready ? "RAG 준비" : running ? "구축 중" : "DB 미구축"}</span></span><small>Document #{document.id}{active ? " · 현재 열림" : ""}</small></span></button></div>; })}</div></div><div className="toc-section"><div className="section-label">목차</div>{toc.length ? <TocTree nodes={toc} activeTocId={activeTocId} expandedIds={expandedTocIds} onPick={openToc} onToggle={toggleToc} /> : <div className="muted">목차 없음</div>}</div></aside>
         <div className={`resize-handle toc-resize-handle ${layout.tocCollapsed ? "hidden" : ""}`} onPointerDown={(event) => beginResize("toc", event)} />
-        <section className="viewer-pane panel chapter-viewer-panel"><div className="panel-heading viewer-heading sticky-viewer-heading"><div className="viewer-heading-main"><button type="button" className="viewer-menu-button" aria-label={layout.tocCollapsed ? "목차 열기" : "목차 닫기"} title={layout.tocCollapsed ? "목차 열기" : "목차 닫기"} onClick={() => setLayout((current) => ({ ...current, tocCollapsed: !current.tocCollapsed }))}><span /><span /><span /></button><div><span className="panel-eyebrow">DOCUMENT VIEWER</span><h2>{activeDocument?.title ?? "문서 선택"}</h2><p>{chapter ? `${chapter.title} · p.${chapter.startPage}–${chapter.endPage}` : "챕터를 불러오는 중"}</p></div></div><div className="viewer-toolbar"><div className="translate-controls"><button type="button" className={`translate-toggle ${translationEnabled ? "active" : ""}`} aria-pressed={translationEnabled} onClick={() => { setTranslationEnabled((current) => !current); setTranslationPanel(null); }}><UiIcon name="translate" size={13} /><span>부분 번역</span></button>{translationEnabled ? <select value={translationLanguage} onChange={(event) => { setTranslationLanguage(event.target.value); setTranslationPanel(null); }} aria-label="번역 언어"><option value="en">English</option><option value="ja">日本語</option><option value="zh-CN">简体中文</option><option value="zh-TW">繁體中文</option><option value="es">Español</option><option value="fr">Français</option><option value="de">Deutsch</option></select> : null}</div><div className="zoom-controls"><button type="button" aria-label="축소" onClick={() => setViewerZoom((value) => clamp(value - 10, 60, 160))}><UiIcon name="minus" size={12} /></button><span>{viewerZoom}%</span><button type="button" aria-label="확대" onClick={() => setViewerZoom((value) => clamp(value + 10, 60, 160))}><UiIcon name="plus" size={12} /></button></div><div className="viewer-status"><span>{pageSizeError || `${pageSize.width} × ${pageSize.height}`}</span><strong>p.{activePage ?? "-"}</strong>{layout.chatCollapsed ? <button type="button" className="viewer-ai-open-button" onClick={() => setLayout((current) => ({ ...current, chatCollapsed: false }))} title="AI 비서 열기"><UiIcon name="sparkles" size={13} /><span>AI 비서 열기</span></button> : null}</div></div></div><div className="viewer-scroll chapter-scroll" ref={viewerRef}><div className={`page-load-sentinel ${loadingEdge === "top" ? "edge-load-active" : ""}`}>{loadedPages.length && loadedPages[0] > 1 ? "이전 페이지 준비 중" : ""}</div>{loadedPages.map((page) => <DocumentPage key={page} page={page} contents={pageContents[page] ?? []} pageSize={pageSize} focusContentId={focusContentId} zoom={viewerZoom} translationEnabled={translationEnabled} onTranslate={(item) => { void translateItem(item); }} />)}<div className={`page-load-sentinel ${loadingEdge === "bottom" ? "edge-load-active" : ""}`}>{loadedPages.length && loadedPages[loadedPages.length - 1] < documentMaxPage ? "다음 페이지 준비 중" : ""}</div></div>{translationPanel ? <aside className="translation-panel" style={translationPanelPosition ? { left: translationPanelPosition.x, top: translationPanelPosition.y } : undefined}><header onPointerDown={beginTranslationDrag}><div><UiIcon name="translate" size={14} /><strong>부분 번역</strong><small>드래그하여 이동</small></div><button type="button" aria-label="번역 패널 닫기" onPointerDown={(event) => event.stopPropagation()} onClick={() => setTranslationPanel(null)}><UiIcon name="close" size={13} /></button></header><div className="translation-source"><span>원문</span><p>{translationPanel.item.text?.replace(/<[^>]*>/g, "")}</p></div><div className="translation-result"><span>번역</span>{translationPanel.loading ? <p className="translation-loading">번역 중...</p> : translationPanel.error ? <p className="translation-error">번역 요청에 실패했습니다.</p> : <p>{translationPanel.translatedText}</p>}</div><footer>행 단위 AI 번역 · 원문은 변경되지 않습니다.</footer></aside> : null}</section>
+        <section className="viewer-pane panel chapter-viewer-panel"><div className="panel-heading viewer-heading sticky-viewer-heading"><div className="viewer-heading-main"><button type="button" className="viewer-menu-button" aria-label={layout.tocCollapsed ? "목차 열기" : "목차 닫기"} title={layout.tocCollapsed ? "목차 열기" : "목차 닫기"} onClick={() => setLayout((current) => ({ ...current, tocCollapsed: !current.tocCollapsed }))}><span /><span /><span /></button><div><span className="panel-eyebrow">DOCUMENT VIEWER</span><h2>{activeDocument?.title ?? "문서 선택"}</h2><p>{chapter ? `${chapter.title} · p.${chapter.startPage}–${chapter.endPage}` : "챕터를 불러오는 중"}</p></div></div><div className="viewer-toolbar"><div className="translate-controls full-translate-controls"><button type="button" className={`translate-toggle ${fullTranslationEnabled ? "active" : ""}`} aria-pressed={fullTranslationEnabled} onClick={() => { setFullTranslationEnabled((current) => !current); setTranslationEnabled(false); setTranslationPanel(null); }}><UiIcon name="translate" size={13} /><span>전체 번역</span></button><select value={fullTranslationLanguage} onChange={(event) => setFullTranslationLanguage(event.target.value)} aria-label="전체 번역 언어">{availableTranslationLanguages.map((code) => <option key={code} value={code}>{languageLabel(code)}</option>)}</select></div><div className="translate-controls"><button type="button" className={`translate-toggle ${translationEnabled ? "active" : ""}`} aria-pressed={translationEnabled} onClick={() => { setTranslationEnabled((current) => !current); setFullTranslationEnabled(false); setTranslationPanel(null); }}><UiIcon name="translate" size={13} /><span>부분 번역</span></button>{translationEnabled ? <select value={translationLanguage} onChange={(event) => { setTranslationLanguage(event.target.value); setTranslationPanel(null); }} aria-label="부분 번역 언어"><option value="en">English</option><option value="ja">日本語</option><option value="zh-CN">简体中文</option><option value="zh-TW">繁體中文</option><option value="es">Español</option><option value="fr">Français</option><option value="de">Deutsch</option></select> : null}</div><div className="zoom-controls"><button type="button" aria-label="축소" onClick={() => changeViewerZoom(-10)}><UiIcon name="minus" size={12} /></button><span>{viewerZoom}%</span><button type="button" aria-label="확대" onClick={() => changeViewerZoom(10)}><UiIcon name="plus" size={12} /></button></div><div className="viewer-status"><span>{pageSizeError || `${pageSize.width} × ${pageSize.height}`}</span><strong>p.{activePage ?? "-"}</strong>{layout.chatCollapsed ? <button type="button" className="viewer-ai-open-button" onClick={() => setLayout((current) => ({ ...current, chatCollapsed: false }))} title="AI 비서 열기"><UiIcon name="sparkles" size={13} /><span>AI 비서 열기</span></button> : null}</div></div></div><div className="viewer-scroll chapter-scroll" ref={viewerRef}><div className={`page-load-sentinel ${loadingEdge === "top" ? "edge-load-active" : ""}`}>{loadedPages.length && loadedPages[0] > 1 ? "이전 페이지 준비 중" : ""}</div>{loadedPages.map((page) => <DocumentPage key={page} page={page} contents={pageContents[page] ?? []} pageSize={pageSize} focusContentId={focusContentId} zoom={viewerZoom} translationEnabled={translationEnabled} fullTranslationEnabled={fullTranslationEnabled} fullTranslationLanguage={fullTranslationLanguage} onTranslate={(item) => { void translateItem(item); }} />)}<div className={`page-load-sentinel ${loadingEdge === "bottom" ? "edge-load-active" : ""}`}>{loadedPages.length && loadedPages[loadedPages.length - 1] < documentMaxPage ? "다음 페이지 준비 중" : ""}</div></div>{translationPanel ? <aside ref={translationPanelRef} className="translation-panel" style={translationPanelPosition ? { left: translationPanelPosition.x, top: translationPanelPosition.y } : undefined}><header onPointerDown={beginTranslationDrag}><div><UiIcon name="translate" size={14} /><strong>부분 번역</strong><small>드래그하여 이동</small></div><button type="button" aria-label="번역 패널 닫기" onPointerDown={(event) => event.stopPropagation()} onClick={() => setTranslationPanel(null)}><UiIcon name="close" size={13} /></button></header><div className="translation-source"><span>원문</span><p>{translationPanel.item.text?.replace(/<[^>]*>/g, "")}</p></div><div className="translation-result"><span>번역</span>{translationPanel.loading ? <p className="translation-loading">번역 중...</p> : translationPanel.error ? <p className="translation-error">번역 요청에 실패했습니다.</p> : <p>{translationPanel.translatedText}</p>}</div><footer>행 단위 AI 번역 · 원문은 변경되지 않습니다.</footer></aside> : null}</section>
         <div className={`resize-handle chat-resize-handle ${layout.chatCollapsed ? "hidden" : ""}`} onPointerDown={(event) => beginResize("chat", event)} />
-        <aside className={`chat-pane panel ${layout.chatCollapsed ? "collapsed" : ""}`}><div className="assistant-titlebar"><div><span className="panel-eyebrow">AI WORKSPACE</span><strong>문서 AI 비서</strong><small className="assistant-scope-meta">AI 검색 범위 · {selectedIds.length}개 문서</small></div><button type="button" className="icon-button" aria-label="AI 비서 접기" title="AI 비서 접기" onClick={() => setLayout((current) => ({ ...current, chatCollapsed: true }))}><UiIcon name="chevron" size={13} /></button></div><div className="assistant-header"><div className="assistant-tabs"><button type="button" className={assistantTab === "assistant" ? "active" : ""} onClick={() => setAssistantTab("assistant")}>AI 비서</button><button type="button" className={assistantTab === "process" ? "active" : ""} onClick={() => setAssistantTab("process")}>Agent Process</button></div></div>{assistantTab === "assistant" ? <><div className="chat-controls"><div className="segmented"><button type="button" className={mode === "agent" ? "active" : ""} onClick={() => setMode("agent")}>Agent</button><button type="button" className={mode === "rag" ? "active" : ""} onClick={() => setMode("rag")}>Hybrid RAG</button></div><details className="assistant-settings"><summary><UiIcon name="sliders" size={12} /><span>검색 설정</span></summary><label>검색 결과 수<select value={topK} onChange={(event) => setTopK(Number(event.target.value))}>{[3,5,8,10].map((value) => <option key={value}>{value}</option>)}</select></label></details></div><SourceDock turn={latestTurn} onOpen={openSource} /><div className="chat-log" ref={chatLogRef} onScroll={(event) => { const root = event.currentTarget; chatAutoStickRef.current = root.scrollHeight - root.scrollTop - root.clientHeight < 80; }}>{!turns.length ? <div className="empty-chat"><strong>선택한 문서에 질문하세요.</strong><p>근거 문서를 먼저 보여주고 답변을 스트리밍합니다.</p></div> : null}{turns.map((turn) => <article key={turn.id} className="chat-turn"><div className="user-message">{turn.question}</div><div className="assistant-message"><div className="answer-text">{turn.answer || (turn.pending ? "답변 생성 중..." : "")}{turn.pending ? <span className="cursor" /> : null}</div>{turn.error ? <div className="turn-error">{turn.error}</div> : null}</div></article>)}</div><form className="question-form" onSubmit={submitQuestion}><textarea value={question} onChange={(event) => setQuestion(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter" && !event.shiftKey) { if (event.nativeEvent.isComposing || event.nativeEvent.keyCode === 229) return; event.preventDefault(); event.currentTarget.form?.requestSubmit(); } }} placeholder={selectedIds.length ? "선택한 문서에 대해 질문하세요" : "AI 검색 대상으로 사용할 문서를 먼저 선택하세요"} rows={3} disabled={!selectedIds.length} /><div><span className={!selectedIds.length ? "scope-empty-warning" : ""}>{selectedIds.length ? "대화는 이 브라우저에 저장됩니다." : "AI 검색 대상으로 선택된 문서가 없습니다."}</span><button type="submit" className="send-button icon-only-send" aria-label="질문 전송" title="질문 전송" disabled={!question.trim() || !selectedIds.length}><UiIcon name="send" size={19} /></button></div></form></> : <div className="process-pane">{latestTurn?.plan ? <><div className="process-overview"><div><span className={`process-live-dot ${latestTurn.pending ? "running" : "done"}`} /><strong>{latestTurn.pending ? "Agent 실행 중" : "Agent 실행 완료"}</strong></div><small>{latestTurn.plan.tool}</small></div><ol className="agent-step-list"><li className="done"><span>1</span><div><strong>질문 분석</strong><small>{latestTurn.question}</small></div></li><li className="done"><span>2</span><div><strong>검색 계획 수립</strong><small>{latestTurn.plan.rationale || latestTurn.plan.tool}</small></div></li><li className={latestTurn.sources.length ? "done" : latestTurn.pending ? "running" : "done"}><span>3</span><div><strong>근거 문서 검색</strong><small>{latestTurn.sources.length ? `${latestTurn.sources.length}개 근거 확보 · Top K ${latestTurn.plan.top_k}` : "검색 중"}</small></div></li><li className={latestTurn.pending ? "running" : "done"}><span>4</span><div><strong>답변 생성</strong><small>{latestTurn.pending ? "LLM 응답 생성 중" : "응답 생성 완료"}</small></div></li></ol><div className="process-query"><span>검색어</span><strong>{latestTurn.plan.query}</strong></div></> : <div className="empty-chat"><strong>아직 Agent 실행 내역이 없습니다.</strong><p>Agent 모드로 질문하면 검색 계획과 실행 단계를 확인할 수 있습니다.</p></div>}</div>}</aside>
+        <aside className={`chat-pane panel ${layout.chatCollapsed ? "collapsed" : ""}`}><div className="assistant-titlebar"><div><span className="panel-eyebrow">AI WORKSPACE</span><strong>문서 AI 비서</strong><small className="assistant-scope-meta">AI 검색 범위 · {selectedIds.length}개 문서</small></div><button type="button" className="icon-button" aria-label="AI 비서 접기" title="AI 비서 접기" onClick={() => setLayout((current) => ({ ...current, chatCollapsed: true }))}><UiIcon name="chevron" size={13} /></button></div><div className="assistant-header"><div className="assistant-tabs"><button type="button" className={assistantTab === "assistant" ? "active" : ""} onClick={() => setAssistantTab("assistant")}>AI 비서</button><button type="button" className={assistantTab === "process" ? "active" : ""} onClick={() => setAssistantTab("process")}>Agent Process</button></div></div>{assistantTab === "assistant" ? <><div className="chat-controls"><div className="segmented"><button type="button" className={mode === "agent" ? "active" : ""} onClick={() => setMode("agent")}>Agent</button><button type="button" className={mode === "rag" ? "active" : ""} onClick={() => setMode("rag")}>Hybrid RAG</button></div><details className="assistant-settings"><summary><UiIcon name="sliders" size={12} /><span>검색 설정</span></summary><label>검색 결과 수<select value={topK} onChange={(event) => setTopK(Number(event.target.value))}>{[3,5,8,10].map((value) => <option key={value}>{value}</option>)}</select></label></details></div><SourceDock turn={latestTurn} onOpen={openSource} /><div className="chat-log" ref={chatLogRef} onScroll={(event) => { const root = event.currentTarget; chatAutoStickRef.current = root.scrollHeight - root.scrollTop - root.clientHeight < 80; }}>{!turns.length ? <div className="empty-chat"><strong>선택한 문서에 질문하세요.</strong><p>근거 문서를 먼저 보여주고 답변을 스트리밍합니다.</p></div> : null}{turns.map((turn) => <article key={turn.id} className="chat-turn"><div className="user-message">{turn.question}</div><div className="assistant-message"><div className="answer-text">{turn.answer || (turn.pending ? "답변 생성 중..." : "")}{turn.pending ? <span className="cursor" /> : null}</div>{turn.error ? <div className="turn-error">{turn.error}</div> : null}</div></article>)}</div><form className="question-form" onSubmit={submitQuestion}><textarea value={question} onChange={(event) => setQuestion(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter" && !event.shiftKey) { if (event.nativeEvent.isComposing || event.nativeEvent.keyCode === 229) return; event.preventDefault(); event.currentTarget.form?.requestSubmit(); } }} placeholder={selectedIds.length ? "선택한 문서에 대해 질문하세요" : "AI 검색 대상으로 사용할 문서를 먼저 선택하세요"} rows={3} disabled={!selectedIds.length} /><div><span className={!selectedIds.length ? "scope-empty-warning" : ""}>{selectedIds.length ? "대화는 이 브라우저에 저장됩니다." : "AI 검색 대상으로 선택된 문서가 없습니다."}</span><button type="submit" className="send-button icon-only-send" aria-label="질문 전송" title="질문 전송" disabled={!question.trim() || !selectedIds.length}><UiIcon name="send" size={19} /></button></div></form></> : <div className="process-pane">{latestTurn?.plan ? <><div className="process-overview"><div><span className={`process-live-dot ${latestTurn.pending ? "running" : "done"}`} /><strong>{latestTurn.pending ? "Agent 실행 중" : "Agent 실행 완료"}</strong></div><small>{latestTurn.steps?.length ?? 0} steps</small></div><ol className="agent-step-list">{(latestTurn.steps ?? []).map((step, index) => <li key={step.id} className={step.status}><span>{index + 1}</span><div><strong>{step.title}</strong><small>{step.detail}</small>{step.tool || step.query ? <em>{[step.tool, step.query].filter(Boolean).join(" · ")}</em> : null}</div></li>)}</ol><div className="process-query"><span>초기 검색 계획</span><strong>{latestTurn.plan.tool} · {latestTurn.plan.query}</strong></div></> : <div className="empty-chat"><strong>아직 Agent 실행 내역이 없습니다.</strong><p>Agent 모드로 질문하면 계획·검색·근거평가·재검색·답변 생성 과정을 확인할 수 있습니다.</p></div>}</div>}</aside>
       </section>
     </main>
   );
