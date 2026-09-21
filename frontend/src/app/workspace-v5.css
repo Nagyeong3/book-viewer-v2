@@ -2080,3 +2080,68 @@ body {
 @media (max-width: 1320px) {
   .scope-search-control { width: 220px; }
 }
+
+
+/* Viewer-local AI reopen action: same visual language as print, always black text. */
+.workspace-v3 .viewer-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.workspace-v3 .viewer-ai-open-button {
+  min-height: 34px;
+  height: 34px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 0 11px;
+  border: 1px solid var(--fp-line);
+  border-radius: 8px;
+  background: #fff;
+  color: #172033 !important;
+  font-family: inherit;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background .14s ease, border-color .14s ease, color .14s ease, transform .14s ease;
+}
+
+.workspace-v3 .viewer-ai-open-button span,
+.workspace-v3 .viewer-ai-open-button svg {
+  color: #172033 !important;
+}
+
+.workspace-v3 .viewer-ai-open-button:hover {
+  border-color: #cbd4e0;
+  background: #f8fafc;
+  color: #172033 !important;
+}
+
+.workspace-v3 .viewer-ai-open-button:active {
+  transform: translateY(1px);
+}
+
+.workspace-v3 .viewer-ai-open-button:focus-visible {
+  outline: 2px solid rgba(47, 91, 234, .34);
+  outline-offset: 2px;
+}
+
+/* Keep viewer actions aligned as a single compact control row. */
+.workspace-v3 .viewer-toolbar {
+  gap: 8px;
+}
+
+.workspace-v3 .viewer-status > strong,
+.workspace-v3 .viewer-ai-open-button,
+.viewer-print-button {
+  align-self: center;
+}
+
+/* Subtle divider between document manipulation and utility actions. */
+.workspace-v3 .viewer-status {
+  padding-left: 2px;
+}
