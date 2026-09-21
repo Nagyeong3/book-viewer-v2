@@ -1,4 +1,5 @@
 from collections.abc import Mapping
+import json
 from typing import Any
 
 from app.domain.models.viewer import BoundingBox, ContentItem, Document
@@ -20,7 +21,8 @@ CONTENT_COLUMNS = """
     x_min AS xmin,
     y_min AS ymin,
     x_max AS xmax,
-    y_max AS ymax
+    y_max AS ymax,
+    translations
 """
 
 
@@ -101,4 +103,21 @@ class PostgresDocumentRepository:
             cropped_image_path=row.get("cropped_image_path"),
             bbox=bbox,
             doc_image_path=row.get("doc_image_path"),
+            translations=PostgresDocumentRepository._translations(row.get("translations")),
         )
+
+
+    @staticmethod
+    def _translations(value: Any) -> dict[str, str] | None:
+        if value is None:
+            return None
+        if isinstance(value, Mapping):
+            return {str(key): str(item) for key, item in value.items() if item is not None}
+        if isinstance(value, str):
+            try:
+                parsed = json.loads(value)
+            except json.JSONDecodeError:
+                return None
+            if isinstance(parsed, Mapping):
+                return {str(key): str(item) for key, item in parsed.items() if item is not None}
+        return None
