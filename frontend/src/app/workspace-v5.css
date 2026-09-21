@@ -2248,3 +2248,410 @@ body {
     padding-inline: 7px;
   }
 }
+
+
+/* Final readability, heading hierarchy, hover, and zoom polish. */
+/* The final pass deliberately favors readability over maximum information density. */
+.workspace-v3 .product-topbar {
+  height: 62px;
+  min-height: 62px;
+  padding-inline: 20px;
+}
+
+.workspace-v3 .workspace-grid {
+  height: calc(100vh - 62px);
+}
+
+.workspace-v3 .brand-mark {
+  width: 32px;
+  height: 32px;
+  font-size: 14px !important;
+}
+
+.workspace-v3 .brand-copy strong { font-size: 18px; }
+.workspace-v3 .brand-copy small { font-size: 14px; }
+
+.workspace-v3 .chapter-pill,
+.workspace-v3 .status-pill,
+.workspace-v3 .topbar-ghost,
+.topbar-index-button {
+  min-height: 38px;
+  height: 38px;
+  padding-inline: 12px;
+  font-size: 15px !important;
+}
+
+.workspace-v3 .chapter-pill > span { font-size: 13px; }
+.topbar-index-button > span { font-size: 15px !important; }
+.topbar-index-button > small { font-size: 14px !important; }
+
+.scope-search-control {
+  width: 270px;
+  height: 38px;
+  padding-inline: 11px;
+}
+
+.scope-search-control input { font-size: 14px; }
+.scope-search-results strong { font-size: 14px; }
+.scope-search-results small,
+.scope-search-results em,
+.scope-search-empty { font-size: 13px; }
+
+/* Panel headings and left-side navigation. */
+.workspace-v3 .panel-heading {
+  min-height: 82px;
+  padding: 16px 17px 14px;
+}
+
+.workspace-v3 .panel-eyebrow { font-size: 13px; }
+.workspace-v3 .panel-heading h2 { font-size: 18px; }
+.workspace-v3 .panel-heading p { font-size: 14px; }
+
+.workspace-v3 .icon-button {
+  width: 34px;
+  height: 34px;
+}
+
+.workspace-v3 .document-picker {
+  padding: 12px 11px 10px;
+}
+
+.workspace-v3 .document-search {
+  min-height: 42px;
+  padding-inline: 12px;
+  font-size: 15px;
+}
+
+.workspace-v3 .scope-toolbar {
+  padding: 10px 11px;
+}
+
+.workspace-v3 .scope-toolbar strong { font-size: 14px; }
+.workspace-v3 .scope-toolbar span,
+.workspace-v3 .scope-toolbar button { font-size: 13px; }
+
+.workspace-v3 .scope-toolbar button {
+  min-height: 30px;
+  padding-inline: 8px;
+}
+
+.workspace-v3 .document-list-row { min-height: 60px; }
+.workspace-v3 .document-item {
+  min-height: 58px;
+  padding-block: 10px;
+}
+
+.workspace-v3 .document-item strong { font-size: 15px; }
+.workspace-v3 .document-item small { font-size: 13px; }
+.workspace-v3 .document-index-badge {
+  min-height: 22px;
+  padding-inline: 8px;
+  font-size: 11px;
+}
+
+.workspace-v3 .checkbox-mark {
+  width: 20px;
+  height: 20px;
+  font-size: 13px;
+}
+
+.workspace-v3 .section-label { font-size: 13px; }
+.workspace-v3 .toc-tree .toc-toggle {
+  width: 24px;
+  height: 34px;
+  font-size: 14px;
+}
+.workspace-v3 .toc-toggle-spacer {
+  width: 24px;
+  height: 34px;
+}
+.workspace-v3 .toc-tree .toc-link {
+  min-height: 34px;
+  padding: 7px 8px;
+  font-size: 14px;
+  line-height: 1.35;
+}
+.workspace-v3 .toc-tree small,
+.workspace-v3 .toc-num { font-size: 13px; }
+
+/* Viewer toolbar may wrap on narrower workstations rather than overflow. */
+.workspace-v3 .sticky-viewer-heading {
+  min-height: 86px;
+  height: auto;
+  padding: 13px 16px;
+}
+
+.workspace-v3 .viewer-heading {
+  flex-wrap: wrap;
+  align-items: center;
+  row-gap: 8px;
+}
+
+.workspace-v3 .viewer-heading-main {
+  flex: 1 1 190px;
+}
+
+.workspace-v3 .viewer-heading h2 { font-size: 18px; }
+.workspace-v3 .viewer-heading p { font-size: 14px; }
+
+.workspace-v3 .viewer-toolbar {
+  flex: 1 1 auto;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  row-gap: 7px;
+  max-width: 100%;
+}
+
+.workspace-v3 .viewer-menu-button {
+  width: 38px;
+  height: 38px;
+}
+
+.workspace-v3 .translate-toggle,
+.workspace-v3 .zoom-controls button,
+.workspace-v3 .translate-controls select {
+  height: 38px;
+  font-size: 14px;
+}
+
+.workspace-v3 .translate-toggle {
+  padding-inline: 10px;
+}
+
+.workspace-v3 .translate-controls select {
+  max-width: 116px;
+}
+
+.workspace-v3 .zoom-controls span {
+  min-width: 50px;
+  font-size: 13px;
+}
+
+.workspace-v3 .zoom-controls button {
+  width: 34px;
+}
+
+.workspace-v3 .viewer-status strong {
+  min-width: 50px;
+  min-height: 36px;
+  font-size: 14px;
+}
+
+.workspace-v3 .viewer-ai-open-button,
+.viewer-print-button {
+  min-height: 38px;
+  height: 38px;
+  padding-inline: 12px;
+  font-size: 14px;
+}
+
+.workspace-v3 .chapter-page-toolbar {
+  min-height: 27px;
+  font-size: 13px;
+}
+
+/* True document-title hierarchy: level 1/2/3 visually match h2/h3/h4. */
+.workspace-v3 .chapter-page-frame {
+  --viewer-zoom-scale: 1;
+}
+
+.workspace-v3 .coordinate-block .coordinate-text,
+.workspace-v3 .coordinate-block .coordinate-table {
+  font-size: 1em;
+  line-height: 1.32;
+}
+
+.workspace-v3 .coordinate-block .semantic-heading {
+  line-height: 1.18;
+  letter-spacing: -.012em;
+}
+
+.workspace-v3 .coordinate-block .semantic-heading-1 {
+  font-size: 1.5em;
+  font-weight: 780;
+}
+
+.workspace-v3 .coordinate-block .semantic-heading-2 {
+  font-size: 1.333em;
+  font-weight: 740;
+}
+
+.workspace-v3 .coordinate-block .semantic-heading-3 {
+  font-size: 1.167em;
+  font-weight: 700;
+}
+
+.workspace-v3 .coordinate-block .semantic-heading-4 {
+  font-size: 1.083em;
+  font-weight: 680;
+}
+
+.workspace-v3 .coordinate-block .semantic-heading-5,
+.workspace-v3 .coordinate-block .semantic-heading-6 {
+  font-size: 1em;
+  font-weight: 660;
+}
+
+/* Partial translation OFF means ordinary text has no hover box at all. */
+.workspace-v3 .translation-inactive .coordinate-block:not(.focused):hover {
+  z-index: auto;
+  background: transparent;
+  box-shadow: none;
+}
+
+.workspace-v3 .translation-inactive .coordinate-block:not(.focused):not(.type-title):not(.type-sub_title):hover {
+  overflow: hidden;
+}
+
+.workspace-v3 .translation-inactive .coordinate-block.type-title:not(.focused):hover,
+.workspace-v3 .translation-inactive .coordinate-block.type-sub_title:not(.focused):hover {
+  overflow: visible;
+}
+
+.workspace-v3 .translation-inactive .coordinate-block:not(.focused):not(.type-table):hover {
+  border-color: transparent;
+}
+
+.workspace-v3 .translation-inactive .coordinate-block.type-table:not(.focused):hover {
+  border-color: rgb(23 32 51 / 10%);
+}
+
+/* Assistant and supporting UI are raised by roughly 2–3pt from the previous pass. */
+.workspace-v3 .assistant-titlebar {
+  min-height: 64px;
+  padding: 12px 14px 10px;
+}
+.workspace-v3 .assistant-titlebar strong { font-size: 16px; }
+.workspace-v3 .assistant-scope-meta { font-size: 13px; }
+
+.workspace-v3 .assistant-header {
+  min-height: 52px;
+  padding: 8px 11px;
+}
+
+.workspace-v3 .assistant-tabs button {
+  min-height: 35px;
+  font-size: 14px;
+}
+
+.workspace-v3 .segmented button {
+  min-height: 32px;
+  padding: 7px 11px;
+  font-size: 13px;
+}
+
+.workspace-v3 .assistant-settings > summary {
+  min-height: 35px;
+  padding-inline: 10px;
+  font-size: 13px;
+}
+.workspace-v3 .assistant-settings > label {
+  min-width: 175px;
+  font-size: 13px;
+}
+.workspace-v3 .assistant-settings select {
+  min-height: 35px;
+  font-size: 13px;
+}
+
+.workspace-v3 .source-dock-heading {
+  min-height: 62px;
+  padding: 10px 12px;
+}
+.workspace-v3 .source-dock-heading strong { font-size: 15px; }
+.workspace-v3 .source-dock-heading small,
+.workspace-v3 .source-strip small { font-size: 13px; }
+.workspace-v3 .source-count {
+  min-width: 25px;
+  height: 25px;
+  font-size: 13px;
+}
+.workspace-v3 .source-strip button {
+  min-height: 66px;
+  padding: 9px 10px;
+}
+.workspace-v3 .source-strip button strong { font-size: 14px; }
+
+.workspace-v3 .user-message,
+.workspace-v3 .assistant-message {
+  font-size: 15px;
+}
+
+.workspace-v3 .user-message {
+  padding: 11px 13px;
+}
+
+.workspace-v3 .assistant-message {
+  padding: 13px 15px;
+}
+
+.workspace-v3 .empty-chat strong { font-size: 15px; }
+.workspace-v3 .empty-chat p { font-size: 14px; }
+
+.workspace-v3 .question-form {
+  padding: 13px;
+}
+
+.workspace-v3 .question-form textarea {
+  min-height: 96px;
+  padding: 13px;
+  font-size: 15px;
+}
+
+.workspace-v3 .question-form span { font-size: 13px; }
+
+.workspace-v3 .icon-only-send {
+  width: 48px;
+  min-width: 48px;
+  height: 46px;
+  min-height: 46px;
+}
+
+.workspace-v3 .process-overview strong { font-size: 15px; }
+.workspace-v3 .process-overview small { font-size: 13px; }
+.workspace-v3 .agent-step-list li > span {
+  width: 33px;
+  height: 33px;
+  font-size: 13px;
+}
+.workspace-v3 .agent-step-list strong { font-size: 14px; }
+.workspace-v3 .agent-step-list small,
+.workspace-v3 .agent-step-list li em { font-size: 13px; }
+.workspace-v3 .process-query span { font-size: 13px; }
+.workspace-v3 .process-query strong { font-size: 14px; }
+
+.workspace-v3 .translation-panel header strong { font-size: 15px; }
+.workspace-v3 .translation-panel header small { font-size: 13px; }
+.workspace-v3 .translation-source > span,
+.workspace-v3 .translation-result > span { font-size: 13px; }
+.workspace-v3 .translation-panel p { font-size: 15px; }
+.workspace-v3 .translation-panel footer { font-size: 13px; }
+
+/* Keep enlarged controls usable on common 1366–1440 px workstations. */
+@media (max-width: 1440px) {
+  .workspace-v3 .viewer-toolbar {
+    gap: 6px;
+  }
+
+  .workspace-v3 .translate-controls select {
+    max-width: 100px;
+  }
+
+  .scope-search-control {
+    width: 220px;
+  }
+}
+
+@media (max-width: 1280px) {
+  .workspace-v3 .viewer-heading-main {
+    flex-basis: 100%;
+  }
+
+  .workspace-v3 .viewer-toolbar {
+    justify-content: flex-start;
+  }
+
+  .workspace-v3 .sticky-viewer-heading {
+    align-content: flex-start;
+  }
+}
