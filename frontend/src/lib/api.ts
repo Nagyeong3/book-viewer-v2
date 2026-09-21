@@ -54,8 +54,19 @@ export type AgentPlan = {
   rationale: string;
 };
 
+export type AgentStep = {
+  id: string;
+  title: string;
+  status: "running" | "done";
+  detail: string;
+  tool?: string;
+  query?: string;
+  decision?: string;
+};
+
 export type StreamHandlers = {
   onPlan?: (plan: AgentPlan) => void;
+  onStep?: (step: AgentStep) => void;
   onSources?: (sources: RagSource[]) => void;
   onToken?: (token: string) => void;
   onDone?: (data: unknown) => void;
@@ -146,6 +157,7 @@ async function consumeSse(response: Response, handlers: StreamHandlers): Promise
       const parsed = parseSseBlock(block);
       if (!parsed) continue;
       if (parsed.event === "plan") handlers.onPlan?.(parsed.data as AgentPlan);
+      else if (parsed.event === "step") handlers.onStep?.(parsed.data as AgentStep);
       else if (parsed.event === "sources") handlers.onSources?.(parsed.data as RagSource[]);
       else if (parsed.event === "token") handlers.onToken?.(String(parsed.data));
       else if (parsed.event === "done") handlers.onDone?.(parsed.data);
