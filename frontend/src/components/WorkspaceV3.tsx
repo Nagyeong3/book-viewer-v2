@@ -146,6 +146,7 @@ function DocumentPage({
   const frameStyle = {
     width: `${zoom}%`,
     maxWidth: `${1040 * zoomScale}px`,
+    fontSize: `${12 * zoomScale}px`,
     "--viewer-zoom-scale": zoomScale,
   } as CSSProperties & { "--viewer-zoom-scale": number };
   const paperStyle: CSSProperties = {
