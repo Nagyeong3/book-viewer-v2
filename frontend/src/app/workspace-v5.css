@@ -1828,3 +1828,255 @@ body {
   color: inherit !important;
   font-size: inherit !important;
 }
+
+
+/* Typography scale pass: raise product text ~2pt and rebalance control geometry. */
+.workspace-v3 {
+  font-size: 12px;
+}
+
+/* Top navigation / chrome */
+.workspace-v3 .brand-copy strong { font-size: 15px; }
+.workspace-v3 .brand-copy small { font-size: 11px; }
+.workspace-v3 .chapter-pill,
+.workspace-v3 .status-pill,
+.workspace-v3 .topbar-ghost,
+.topbar-index-button {
+  min-height: 34px;
+  height: 34px;
+  font-size: 12px !important;
+}
+.workspace-v3 .chapter-pill > span { font-size: 10px; }
+.topbar-index-button > span { font-size: 12px !important; }
+.topbar-index-button > small { font-size: 11px !important; }
+.scope-search-control {
+  height: 34px;
+  width: 260px;
+}
+.scope-search-control input { font-size: 11px; }
+.scope-search-results strong { font-size: 11px; }
+.scope-search-results small,
+.scope-search-results em,
+.scope-search-empty { font-size: 10px; }
+
+/* Panel headings */
+.workspace-v3 .panel-eyebrow { font-size: 10px; }
+.workspace-v3 .panel-heading h2 { font-size: 15px; }
+.workspace-v3 .panel-heading p { font-size: 11px; }
+.workspace-v3 .assistant-titlebar strong { font-size: 13px; }
+.workspace-v3 .assistant-scope-meta { font-size: 10px; }
+
+/* Left document navigation */
+.workspace-v3 .document-search {
+  min-height: 38px;
+  font-size: 12px;
+}
+.workspace-v3 .scope-toolbar {
+  padding: 9px 10px;
+}
+.workspace-v3 .scope-toolbar strong { font-size: 11px; }
+.workspace-v3 .scope-toolbar span,
+.workspace-v3 .scope-toolbar button { font-size: 10px; }
+.workspace-v3 .document-list-row { min-height: 54px; }
+.workspace-v3 .document-item { min-height: 52px; }
+.workspace-v3 .document-item strong { font-size: 12px; }
+.workspace-v3 .document-item small { font-size: 10px; }
+.workspace-v3 .document-index-badge {
+  min-height: 20px;
+  padding: 0 7px;
+  font-size: 9px;
+}
+.workspace-v3 .checkbox-mark {
+  width: 18px;
+  height: 18px;
+  font-size: 11px;
+}
+
+/* TOC */
+.workspace-v3 .section-label { font-size: 10px; }
+.workspace-v3 .toc-tree .toc-toggle {
+  width: 22px;
+  height: 30px;
+  font-size: 12px;
+}
+.workspace-v3 .toc-toggle-spacer {
+  width: 22px;
+  height: 30px;
+}
+.workspace-v3 .toc-tree .toc-link {
+  min-height: 30px;
+  padding: 6px 8px;
+  font-size: 11px;
+}
+.workspace-v3 .toc-tree small,
+.workspace-v3 .toc-num { font-size: 10px; }
+
+/* Viewer toolbar / controls */
+.workspace-v3 .viewer-heading h2 { font-size: 15px; }
+.workspace-v3 .viewer-heading p { font-size: 11px; }
+.workspace-v3 .viewer-menu-button {
+  width: 34px;
+  height: 34px;
+}
+.workspace-v3 .translate-toggle,
+.workspace-v3 .zoom-controls button,
+.workspace-v3 .translate-controls select {
+  height: 34px;
+  font-size: 11px;
+}
+.workspace-v3 .zoom-controls span { font-size: 10px; min-width: 46px; }
+.workspace-v3 .viewer-status strong {
+  min-height: 32px;
+  min-width: 46px;
+  font-size: 11px;
+}
+.viewer-print-button {
+  min-height: 34px;
+  font-size: 11px;
+}
+
+/* Page labels */
+.workspace-v3 .chapter-page-toolbar {
+  min-height: 24px;
+  font-size: 10px;
+}
+
+/* AI assistant controls */
+.workspace-v3 .assistant-tabs button {
+  min-height: 31px;
+  font-size: 11px;
+}
+.workspace-v3 .segmented button {
+  padding: 6px 10px;
+  font-size: 10px;
+}
+.workspace-v3 .assistant-settings > summary {
+  min-height: 31px;
+  font-size: 10px;
+}
+.workspace-v3 .assistant-settings > label {
+  min-width: 165px;
+  font-size: 10px;
+}
+.workspace-v3 .assistant-settings select {
+  min-height: 32px;
+  font-size: 10px;
+}
+
+/* Evidence / sources */
+.workspace-v3 .source-dock-heading strong { font-size: 12px; }
+.workspace-v3 .source-dock-heading small,
+.workspace-v3 .source-strip small { font-size: 10px; }
+.workspace-v3 .source-count {
+  min-width: 22px;
+  height: 22px;
+  font-size: 10px;
+}
+.workspace-v3 .source-strip button {
+  min-height: 60px;
+}
+.workspace-v3 .source-strip button strong { font-size: 11px; }
+
+/* Chat */
+.workspace-v3 .user-message,
+.workspace-v3 .assistant-message {
+  font-size: 12px;
+}
+.workspace-v3 .user-message {
+  padding: 10px 12px;
+}
+.workspace-v3 .assistant-message {
+  padding: 12px 14px;
+}
+.workspace-v3 .answer-text { line-height: 1.68; }
+.workspace-v3 .empty-chat strong { font-size: 12px; }
+.workspace-v3 .empty-chat p { font-size: 11px; }
+.workspace-v3 .question-form {
+  padding: 12px;
+}
+.workspace-v3 .question-form textarea {
+  min-height: 88px;
+  padding: 12px;
+  font-size: 12px;
+}
+.workspace-v3 .question-form span { font-size: 10px; }
+.workspace-v3 .icon-only-send {
+  width: 44px;
+  min-width: 44px;
+  height: 42px;
+  min-height: 42px;
+}
+.workspace-v3 .icon-only-send svg {
+  width: 21px;
+  height: 21px;
+}
+
+/* Agent process */
+.workspace-v3 .process-overview strong { font-size: 12px; }
+.workspace-v3 .process-overview small { font-size: 10px; }
+.workspace-v3 .agent-step-list li > span {
+  width: 30px;
+  height: 30px;
+  font-size: 10px;
+}
+.workspace-v3 .agent-step-list strong { font-size: 11px; }
+.workspace-v3 .agent-step-list small { font-size: 10px; }
+.workspace-v3 .process-query span { font-size: 10px; }
+.workspace-v3 .process-query strong { font-size: 11px; }
+
+/* Translation popup */
+.workspace-v3 .translation-panel header strong { font-size: 12px; }
+.workspace-v3 .translation-panel header small { font-size: 10px; }
+.workspace-v3 .translation-source > span,
+.workspace-v3 .translation-result > span { font-size: 10px; }
+.workspace-v3 .translation-panel p { font-size: 12px; }
+.workspace-v3 .translation-panel footer { font-size: 10px; }
+
+/* Index manager modal */
+.index-manager-panel h2 { font-size: 21px; }
+.index-manager-panel header p { font-size: 13px; }
+.index-eyebrow { font-size: 12px; }
+.index-summary span { font-size: 12px; }
+.index-summary strong { font-size: 16px; }
+.index-summary > button { min-height: 34px; font-size: 12px; }
+.index-document-main strong { font-size: 14px; }
+.index-document-main small { font-size: 11px; }
+.index-state-label { font-size: 12px; }
+.index-document-actions button {
+  min-height: 34px;
+  padding: 0 12px;
+  font-size: 12px;
+}
+.index-row-message { font-size: 11px; }
+.index-manager-panel > footer { font-size: 12px; }
+.index-manager-panel > footer button {
+  min-height: 34px;
+  font-size: 12px;
+}
+
+/* Keep spacing proportional after text enlargement */
+.workspace-v3 .panel-heading {
+  min-height: 74px;
+  padding: 15px 16px 13px;
+}
+.workspace-v3 .assistant-titlebar {
+  min-height: 58px;
+  padding: 11px 13px 9px;
+}
+.workspace-v3 .assistant-header {
+  min-height: 46px;
+  padding: 7px 10px;
+}
+.workspace-v3 .chat-controls {
+  padding: 9px 10px;
+}
+.workspace-v3 .source-dock-heading {
+  min-height: 56px;
+}
+.workspace-v3 .chapter-scroll {
+  padding-top: 20px;
+}
+
+@media (max-width: 1320px) {
+  .scope-search-control { width: 220px; }
+}
