@@ -97,7 +97,7 @@ try {
   await page.getByRole("button", { name: "전체 번역" }).click();
 
   // Per-document language sets must change when another document is opened.
-  await page.getByRole("button", { name: /지원장비 운용교범 샘플/ }).click();
+  await page.locator(".document-item").filter({ hasText: "지원장비 운용교범 샘플" }).click();
   await page.waitForTimeout(250);
   const document102Languages = await fullLanguageSelect.locator("option").evaluateAll((options) =>
     options.map((option) => option.value).filter(Boolean),
@@ -106,7 +106,7 @@ try {
   assert(JSON.stringify(document102Languages) === JSON.stringify(["en"]),
     `Document 102 translation keys mismatch: ${JSON.stringify(document102Languages)}`);
   report.checks.translationLanguagesAreDocumentScoped = true;
-  await page.getByRole("button", { name: /LAH 정비교범 샘플/ }).click();
+  await page.locator(".document-item").filter({ hasText: "LAH 정비교범 샘플" }).click();
   await page.locator("#content-1103").waitFor({ state: "visible", timeout: 15_000 });
 
   // Partial translation exposes only the requested presets plus a direct-input option.
