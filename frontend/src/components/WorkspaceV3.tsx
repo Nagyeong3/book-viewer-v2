@@ -424,6 +424,40 @@ export default function WorkspaceV3() {
     return () => { cancelled = true; };
   }, [activeDocumentId]);
 
+  useEffect(() => {
+    if (!activeDocumentId) {
+      setFullTranslationLanguages([]);
+      setFullTranslationLanguage("");
+      setFullTranslationEnabled(false);
+      return;
+    }
+
+    let cancelled = false;
+    setFullTranslationLanguagesLoading(true);
+    setFullTranslationLanguages([]);
+    setFullTranslationLanguage("");
+    setFullTranslationEnabled(false);
+
+    api.listTranslationLanguages(activeDocumentId)
+      .then((languages) => {
+        if (cancelled) return;
+        const normalized = Array.from(new Set(languages.filter((code) => code.trim()))).sort((a, b) => a.localeCompare(b));
+        setFullTranslationLanguages(normalized);
+        setFullTranslationLanguage(normalized[0] ?? "");
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setFullTranslationLanguages([]);
+          setFullTranslationLanguage("");
+        }
+      })
+      .finally(() => {
+        if (!cancelled) setFullTranslationLanguagesLoading(false);
+      });
+
+    return () => { cancelled = true; };
+  }, [activeDocumentId]);
+
   const ensurePageSize = useCallback((items: ContentItem[]) => {
     if (!activeDocumentId || pageSizeCache.has(activeDocumentId) || pageSizeLoadingRef.current) return;
     const path = items.find((item) => item.doc_image_path)?.doc_image_path;
