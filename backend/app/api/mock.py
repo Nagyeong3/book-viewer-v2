@@ -152,6 +152,15 @@ CONTENTS = {
     ],
 }
 
+# Mock deliberately models uneven translation coverage:
+# document 101 has en/fil/pl overall, one row is missing pl, while document 102
+# only has en. This exercises per-document language discovery and row fallback.
+if CONTENTS[101][2]["translations"]:
+    CONTENTS[101][2]["translations"].pop("pl", None)
+for _entry in CONTENTS[102]:
+    if _entry["translations"]:
+        _entry["translations"] = {"en": _entry["translations"]["en"]}
+
 INDEX_STATE: dict[int, dict[str, Any]] = {
     101: {"document_id": 101, "state": "ready", "indexed_chunks": 13, "message": "Mock 벡터 DB 구축 완료"},
     102: {"document_id": 102, "state": "missing", "indexed_chunks": 0, "message": None},
@@ -241,6 +250,16 @@ async def get_document(document_id: int):
 async def get_toc(document_id: int):
     _document(document_id)
     return TOC.get(document_id, [])
+
+@router.get("/api/documents/{document_id}/translation-languages")
+async def list_translation_languages(document_id: int):
+    _document(document_id)
+    languages: set[str] = set()
+    for entry in CONTENTS.get(document_id, []):
+        for code, translated in (entry.get("translations") or {}).items():
+            if code and translated and str(translated).strip():
+                languages.add(str(code))
+    return sorted(languages, key=str.casefold)
 
 @router.get("/api/documents/{document_id}/contents")
 async def list_contents(document_id: int, page: int | None = Query(default=None, ge=1)):
@@ -436,25 +455,15 @@ async def mock_translate(payload: dict[str, Any]):
         raise HTTPException(status_code=422, detail="text is required")
     labels = {
         "en": "English",
+        "ko": "한국어",
+        "fil": "Filipino",
+        "pl": "Polski",
         "ja": "日本語",
-        "zh-CN": "简体中文",
-        "zh-TW": "繁體中文",
-        "es": "Español",
-        "fr": "Français",
-        "de": "Deutsch",
+        "ar-SA": "العربية (Saudi Arabia)",
     }
     language = labels.get(target, target)
-    samples = {
-        "en": f"[Mock {language}] {text}",
-        "ja": f"[Mock {language}] {text}",
-        "zh-CN": f"[Mock {language}] {text}",
-        "zh-TW": f"[Mock {language}] {text}",
-        "es": f"[Mock {language}] {text}",
-        "fr": f"[Mock {language}] {text}",
-        "de": f"[Mock {language}] {text}",
-    }
     await asyncio.sleep(0.35)
-    return {"translated_text": samples.get(target, f"[Mock {language}] {text}"), "target_language": target}
+    return {"translated_text": f"[Mock {language}] {text}", "target_language": target}
 
 
 @router.get("/mock-assets/{path:path}")
