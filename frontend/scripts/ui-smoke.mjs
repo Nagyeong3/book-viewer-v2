@@ -73,6 +73,92 @@ try {
   report.checks.translationOffHoverInvisible = true;
   await page.screenshot({ path: path.join(outputDir, "ui-hover-off-1600x1000.png"), fullPage: false });
 
+  // Stored whole-document translation choices must come from the active document's DB keys.
+  const fullLanguageSelect = page.getByLabel("전체 번역 언어");
+  await fullLanguageSelect.waitFor({ state: "visible", timeout: 15_000 });
+  const document101Languages = await fullLanguageSelect.locator("option").evaluateAll((options) =>
+    options.map((option) => option.value).filter(Boolean),
+  );
+  report.measurements.document101TranslationLanguages = document101Languages;
+  assert(JSON.stringify(document101Languages) === JSON.stringify(["en", "fil", "pl"]),
+    `Document 101 translation keys mismatch: ${JSON.stringify(document101Languages)}`);
+
+  // A row missing the selected translation must keep its original text.
+  await fullLanguageSelect.selectOption("pl");
+  await page.getByRole("button", { name: "전체 번역" }).click();
+  await page.waitForTimeout(150);
+  const translatedHeading = await page.locator("#content-1102").innerText();
+  const fallbackBody = await page.locator("#content-1103").innerText();
+  assert(translatedHeading.includes("[PL]"), `Expected stored Polish translation, got: ${translatedHeading}`);
+  assert(fallbackBody.includes("본 교범은 항공기 후속지원 업무를 위한 샘플 문서입니다."),
+    `Missing-row fallback did not preserve original text: ${fallbackBody}`);
+  report.checks.fullTranslationUsesStoredKeys = true;
+  report.checks.fullTranslationFallsBackPerRow = true;
+  await page.getByRole("button", { name: "전체 번역" }).click();
+
+  // Per-document language sets must change when another document is opened.
+  await page.getByRole("button", { name: /지원장비 운용교범 샘플/ }).click();
+  await page.waitForTimeout(250);
+  const document102Languages = await fullLanguageSelect.locator("option").evaluateAll((options) =>
+    options.map((option) => option.value).filter(Boolean),
+  );
+  report.measurements.document102TranslationLanguages = document102Languages;
+  assert(JSON.stringify(document102Languages) === JSON.stringify(["en"]),
+    `Document 102 translation keys mismatch: ${JSON.stringify(document102Languages)}`);
+  report.checks.translationLanguagesAreDocumentScoped = true;
+  await page.getByRole("button", { name: /LAH 정비교범 샘플/ }).click();
+  await page.locator("#content-1103").waitFor({ state: "visible", timeout: 15_000 });
+
+  // Partial translation exposes only the requested presets plus a direct-input option.
+  await page.getByRole("button", { name: "부분 번역" }).click();
+  const partialLanguageSelect = page.getByLabel("부분 번역 언어");
+  const partialOptions = await partialLanguageSelect.locator("option").evaluateAll((options) =>
+    options.map((option) => option.value),
+  );
+  const expectedPartialOptions = ["en", "ko", "fil", "pl", "ja", "ar-SA", "__custom__"];
+  report.measurements.partialTranslationOptions = partialOptions;
+  assert(JSON.stringify(partialOptions) === JSON.stringify(expectedPartialOptions),
+    `Partial translation options mismatch: ${JSON.stringify(partialOptions)}`);
+  assert(!partialOptions.some((value) => value.startsWith("zh")), "Chinese must not be exposed in partial translation.");
+
+  await partialLanguageSelect.selectOption("__custom__");
+  const customLanguageInput = page.getByLabel("직접 입력 번역 언어");
+  await customLanguageInput.fill("베트남어");
+  await page.locator("#content-1103").click();
+  await page.locator(".translation-result").waitFor({ state: "visible", timeout: 10_000 });
+  await page.waitForFunction(() => !document.querySelector(".translation-loading"), null, { timeout: 10_000 });
+  const customTranslation = await page.locator(".translation-result").innerText();
+  assert(customTranslation.includes("[Mock 베트남어]"), `Custom language translation failed: ${customTranslation}`);
+  report.checks.partialTranslationPresetList = true;
+  report.checks.partialTranslationCustomTarget = true;
+  await page.getByRole("button", { name: "번역 패널 닫기" }).click();
+  await page.getByRole("button", { name: "부분 번역" }).click();
+
+  // Print is immediately left of the AI reopen action, and utility labels match translation control sizing.
+  await page.getByRole("button", { name: "AI 비서 접기" }).click();
+  const printButton = page.getByRole("button", { name: /인쇄/ });
+  const aiOpenButton = page.getByRole("button", { name: /AI 비서 열기/ });
+  const vectorButton = page.getByRole("button", { name: /벡터 DB/ });
+  await aiOpenButton.waitFor({ state: "visible", timeout: 5_000 });
+  const [printBox, aiBox] = await Promise.all([printButton.boundingBox(), aiOpenButton.boundingBox()]);
+  assert(printBox && aiBox && printBox.x < aiBox.x, `Expected print before AI reopen: print=${JSON.stringify(printBox)} ai=${JSON.stringify(aiBox)}`);
+  const utilityFontSizes = await page.evaluate(() => {
+    const fontSize = (selector) => getComputedStyle(document.querySelector(selector)).fontSize;
+    return {
+      fullTranslate: fontSize(".full-translate-controls .translate-toggle"),
+      print: fontSize(".viewer-print-button"),
+      aiOpen: fontSize(".viewer-ai-open-button"),
+      vector: fontSize(".topbar-index-button"),
+    };
+  });
+  report.measurements.utilityFontSizes = utilityFontSizes;
+  assert(utilityFontSizes.print === utilityFontSizes.fullTranslate, `Print font mismatch: ${JSON.stringify(utilityFontSizes)}`);
+  assert(utilityFontSizes.aiOpen === utilityFontSizes.fullTranslate, `AI font mismatch: ${JSON.stringify(utilityFontSizes)}`);
+  assert(utilityFontSizes.vector === utilityFontSizes.fullTranslate, `Vector DB font mismatch: ${JSON.stringify(utilityFontSizes)}`);
+  report.checks.viewerUtilityOrder = true;
+  report.checks.viewerUtilityFontAlignment = true;
+  await aiOpenButton.click();
+
   await page.mouse.move(10, 10);
   const firstPaper = page.locator(".chapter-page-paper").first();
   const beforeBox = await firstPaper.boundingBox();
