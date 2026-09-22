@@ -42,6 +42,39 @@ const MAX_SAVED_TURNS = 30;
 const DEFAULT_PAGE_SIZE: PageSize = { width: 1250, height: 1755 };
 const pageSizeCache = new Map<number, PageSize>();
 const clamp = (value: number, min: number, max: number) => Math.min(Math.max(value, min), max);
+const CUSTOM_TRANSLATION_LANGUAGE = "__custom__";
+const PARTIAL_TRANSLATION_OPTIONS = [
+  { value: "en", label: "영어" },
+  { value: "ko", label: "한국어" },
+  { value: "fil", label: "필리핀어" },
+  { value: "pl", label: "폴란드어" },
+  { value: "ja", label: "일본어" },
+  { value: "ar-SA", label: "사우디(아랍어)" },
+  { value: CUSTOM_TRANSLATION_LANGUAGE, label: "기타(직접입력)" },
+] as const;
+const STORED_LANGUAGE_LABELS: Record<string, string> = {
+  en: "English",
+  ko: "한국어",
+  fil: "Filipino",
+  pl: "Polski",
+  ja: "日本語",
+  "ar-SA": "العربية (Saudi Arabia)",
+  "zh-CN": "简体中文",
+  "zh-TW": "繁體中文",
+  es: "Español",
+  fr: "Français",
+  de: "Deutsch",
+};
+
+function languageLabel(code: string) {
+  return STORED_LANGUAGE_LABELS[code] ?? code;
+}
+
+function storedTranslation(item: ContentItem, language: string): string | null {
+  const candidate = item.translations?.[language];
+  if (typeof candidate !== "string" || !candidate.trim()) return null;
+  return candidate;
+}
 
 function headingTag(level: number | null): "h2" | "h3" | "h4" | "h5" | "h6" {
   // Document title levels 1/2/3 intentionally map to h2/h3/h4.
@@ -178,8 +211,10 @@ function DocumentPage({
                 item={item}
                 textOverride={fullTranslationEnabled
                   ? (item.content_type === "table"
-                      ? (item.translations?.[fullTranslationLanguage]?.trim().startsWith("<table") ? item.translations?.[fullTranslationLanguage] : item.text)
-                      : item.translations?.[fullTranslationLanguage] ?? item.text)
+                      ? (storedTranslation(item, fullTranslationLanguage)?.trim().startsWith("<table")
+                          ? storedTranslation(item, fullTranslationLanguage)
+                          : item.text)
+                      : storedTranslation(item, fullTranslationLanguage) ?? item.text)
                   : item.text}
               />
             </div>
