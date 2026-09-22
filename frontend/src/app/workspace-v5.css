@@ -2655,3 +2655,87 @@ body {
     align-content: flex-start;
   }
 }
+
+
+/* Translation selector and viewer utility alignment pass. */
+.workspace-v3 .translate-toggle:disabled,
+.workspace-v3 .translate-controls select:disabled {
+  cursor: default;
+  opacity: .52;
+}
+
+.workspace-v3 .partial-translate-controls {
+  flex-wrap: wrap;
+}
+
+.workspace-v3 .custom-translation-input {
+  width: 142px;
+  height: 38px;
+  padding: 0 10px;
+  border: 1px solid var(--fp-line);
+  border-radius: 8px;
+  outline: 0;
+  background: #fff;
+  color: #263246;
+  font: inherit;
+  font-size: 14px;
+}
+
+.workspace-v3 .custom-translation-input::placeholder {
+  color: #98a2b3;
+}
+
+.workspace-v3 .custom-translation-input:focus {
+  border-color: #b8c6ff;
+  box-shadow: 0 0 0 3px rgba(49,94,251,.07);
+}
+
+/* Portal insertion order is not the visual order: print stays before AI reopen. */
+.workspace-v3 .viewer-status > strong {
+  order: 0;
+}
+
+.viewer-print-button {
+  order: 1;
+  min-height: 38px;
+  height: 38px;
+  font-size: 14px !important;
+  font-weight: 600;
+}
+
+.viewer-print-button > span {
+  font-size: 14px !important;
+}
+
+.workspace-v3 .viewer-ai-open-button {
+  order: 2;
+  min-height: 38px;
+  height: 38px;
+  font-size: 14px !important;
+  font-weight: 600;
+}
+
+.workspace-v3 .viewer-ai-open-button > span {
+  font-size: 14px !important;
+}
+
+/* Match the vector DB action to the viewer's translation controls. */
+.topbar .topbar-index-button {
+  font-size: 14px !important;
+  font-weight: 600 !important;
+}
+
+.topbar .topbar-index-button > span {
+  font-size: 14px !important;
+  font-weight: 600 !important;
+}
+
+.topbar .topbar-index-button > small {
+  font-size: 12px !important;
+}
+
+@media (max-width: 1440px) {
+  .workspace-v3 .custom-translation-input {
+    width: 128px;
+  }
+}
