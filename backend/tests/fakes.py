@@ -5,9 +5,9 @@ class FakeDocumentRepository:
     def __init__(self) -> None:
         self.documents = [Document(id=1, title="Manual A"), Document(id=2, title="Manual B")]
         self.contents = [
-            ContentItem(10, 1, "Chapter 1", "title", 1, None, 1, 1, None, BoundingBox(0, 0, 100, 20)),
-            ContentItem(11, 1, "Body 1", "text", None, 10, 2, 1, None, BoundingBox(0, 20, 100, 50)),
-            ContentItem(12, 1, "Section A", "title", 2, 10, 3, 2, None, BoundingBox(0, 0, 100, 20)),
+            ContentItem(10, 1, "Chapter 1", "title", 1, None, 1, 1, None, BoundingBox(0, 0, 100, 20), translations={"en": "Chapter 1", "pl": "Rozdział 1"}),
+            ContentItem(11, 1, "Body 1", "text", None, 10, 2, 1, None, BoundingBox(0, 20, 100, 50), translations={"en": "Body 1"}),
+            ContentItem(12, 1, "Section A", "title", 2, 10, 3, 2, None, BoundingBox(0, 0, 100, 20), translations={"fil": "Seksyon A"}),
             ContentItem(13, 1, "Section B", "title", 2, 10, 4, 3, "crop.png", None),
             ContentItem(14, 1, "Chapter 2", "title", 1, None, 5, 4, None, None),
             ContentItem(15, 1, "Body 2", "text", None, 14, 6, 4, None, None),
