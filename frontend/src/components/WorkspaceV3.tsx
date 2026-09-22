@@ -324,11 +324,14 @@ export default function WorkspaceV3() {
   const [startupError, setStartupError] = useState("");
   const [viewerZoom, setViewerZoom] = useState(100);
   const [fullTranslationEnabled, setFullTranslationEnabled] = useState(false);
-  const [fullTranslationLanguage, setFullTranslationLanguage] = useState("en");
+  const [fullTranslationLanguage, setFullTranslationLanguage] = useState("");
+  const [fullTranslationLanguages, setFullTranslationLanguages] = useState<string[]>([]);
+  const [fullTranslationLanguagesLoading, setFullTranslationLanguagesLoading] = useState(false);
   const [scopeSearchQuery, setScopeSearchQuery] = useState("");
   const [scopeSearchResults, setScopeSearchResults] = useState<ScopeSearchResult[]>([]);
   const [translationEnabled, setTranslationEnabled] = useState(false);
   const [translationLanguage, setTranslationLanguage] = useState("en");
+  const [customTranslationLanguage, setCustomTranslationLanguage] = useState("");
   const [translationPanel, setTranslationPanel] = useState<TranslationPanel>(null);
   const [translationPanelPosition, setTranslationPanelPosition] = useState<{ x: number; y: number } | null>(null);
   const [layout, setLayout] = useState<LayoutState>({ tocWidth: 320, chatWidth: 430, tocCollapsed: false, chatCollapsed: false });
