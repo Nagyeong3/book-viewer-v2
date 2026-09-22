@@ -26,6 +26,16 @@ class ViewerService:
             numbered = [item for item in numbered if item.page == page]
         return numbered
 
+    async def list_translation_languages(self, document_id: int) -> list[str]:
+        await self.get_document(document_id)
+        items = await self._repository.list_contents(document_id)
+        languages: set[str] = set()
+        for item in items:
+            for code, translated in (item.translations or {}).items():
+                if code and translated and translated.strip():
+                    languages.add(code)
+        return sorted(languages, key=str.casefold)
+
     async def get_content(self, document_id: int, content_id: int) -> ViewerContent:
         await self.get_document(document_id)
         item = await self._repository.get_content(document_id, content_id)
