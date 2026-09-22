@@ -46,10 +46,10 @@ const CUSTOM_TRANSLATION_LANGUAGE = "__custom__";
 const PARTIAL_TRANSLATION_OPTIONS = [
   { value: "en", label: "영어" },
   { value: "ko", label: "한국어" },
-  { value: "fil", label: "필리핀어" },
-  { value: "pl", label: "폴란드어" },
-  { value: "ja", label: "일본어" },
-  { value: "ar-SA", label: "사우디(아랍어)" },
+  { value: "fil", label: "필리핀" },
+  { value: "pl", label: "폴란드" },
+  { value: "ja", label: "일어" },
+  { value: "ar-SA", label: "사우디" },
   { value: CUSTOM_TRANSLATION_LANGUAGE, label: "기타(직접입력)" },
 ] as const;
 const STORED_LANGUAGE_LABELS: Record<string, string> = {
