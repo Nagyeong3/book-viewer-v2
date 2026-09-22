@@ -89,6 +89,8 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
 export const api = {
   listDocuments: () => request<DocumentSummary[]>("/api/documents"),
   getToc: (documentId: number) => request<TocNode[]>(`/api/documents/${documentId}/toc`),
+  listTranslationLanguages: (documentId: number) =>
+    request<string[]>(`/api/documents/${documentId}/translation-languages`),
   listContents: (documentId: number, page?: number) =>
     request<ContentItem[]>(`/api/documents/${documentId}/contents${page ? `?page=${page}` : ""}`),
   pageImageUrl: (documentId: number, page: number) => `${API_BASE}/api/documents/${documentId}/pages/${page}/image`,
