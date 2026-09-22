@@ -82,6 +82,14 @@ async def get_toc(document_id: int, service: ViewerService = Depends(get_viewer_
     return await service.get_toc(document_id)
 
 
+@router.get("/{document_id}/translation-languages", response_model=list[str])
+async def list_translation_languages(
+    document_id: int,
+    service: ViewerService = Depends(get_viewer_service),
+):
+    return await service.list_translation_languages(document_id)
+
+
 @router.get("/{document_id}/contents", response_model=list[ContentResponse])
 async def list_contents(
     document_id: int,
