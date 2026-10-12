@@ -89,6 +89,12 @@ jobs:
           UI_BASE_URL: http://127.0.0.1:3000
         run: node scripts/ui-smoke.mjs
 
+      - name: Run role-based UI smoke
+        working-directory: frontend
+        env:
+          UI_BASE_URL: http://127.0.0.1:3000
+        run: node scripts/role-smoke.mjs
+
       - name: Upload UI evidence
         if: always()
         uses: actions/upload-artifact@v4
