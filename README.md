@@ -6,11 +6,12 @@ Clean-room rebuild of the Booklet RAG viewer and chatbot.
 
 ## 폐쇄망 Windows 백엔드 실행
 
-폐쇄망 개발 PC에서 backend 폴더 안에 생성한 Conda 가상환경을 활성화한 뒤 Uvicorn을 실행한다.
+폐쇄망 개발 PC에서는 CMD를 새로 열 때 먼저 Miniconda 초기화 스크립트를 호출한 뒤 Conda 가상환경을 활성화한다. 현재 PC에서는 `conda init cmd.exe`만으로 `conda` 명령이 바로 활성화되지 않으므로 아래 순서를 사용한다.
 
 ```cmd
+call C:\ProgramData\miniconda3\Scripts\activate.bat
+conda activate bookviewer-v2-py312
 cd /d D:\project\book-viewer-v2\backend
-conda activate D:\project\book-viewer-v2\backend\bookviewer-v2-py312
 python -m uvicorn app.main:app --host 0.0.0.0 --port 9056
 ```
 
@@ -21,7 +22,11 @@ where python
 python --version
 ```
 
-`conda activate`가 동작하지 않거나 환경 이름으로 찾지 못하는 경우에는 위 예시처럼 환경의 전체 경로를 지정한다. 가상환경 위치가 다른 PC에서는 실제 `bookviewer-v2-py312` 폴더 경로로 바꿔 실행한다.
+`conda activate bookviewer-v2-py312`에서 환경을 찾지 못하는 경우에는 `conda env list`로 등록된 환경 이름/경로를 확인한다.
+
+```cmd
+conda env list
+```
 
 운영 서버에서 압축 해제한 Python 환경을 직접 사용하는 경우에는 Conda 활성화 없이 다음과 같이 실행할 수 있다.
 
