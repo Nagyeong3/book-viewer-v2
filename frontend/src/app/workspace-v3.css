@@ -1,0 +1,244 @@
+.workspace-v3 .product-topbar {
+  backdrop-filter: saturate(1.1) blur(8px);
+}
+
+.chapter-pill {
+  max-width: 320px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  padding: 5px 9px;
+  border: 1px solid #dbe2ec;
+  border-radius: 999px;
+  background: #fff;
+  color: #475467;
+  font-size: 10px;
+}
+
+.polished-picker {
+  padding: 10px 10px 8px;
+  border-bottom: 1px solid #e5e9ef;
+}
+
+.document-search {
+  width: 100%;
+  box-sizing: border-box;
+  margin-bottom: 8px;
+  padding: 8px 9px;
+  border: 1px solid #d8dee8;
+  border-radius: 8px;
+  background: #fbfcfe;
+  color: #273244;
+  font-size: 11px;
+  outline: none;
+}
+
+.document-search:focus {
+  border-color: #8da2ff;
+  background: #fff;
+  box-shadow: 0 0 0 3px #315efb14;
+}
+
+.workspace-v3 .document-list-large {
+  max-height: 215px;
+}
+
+.workspace-v3 .toc-tree button.active {
+  background: #eef2ff;
+  color: #2446c7;
+}
+
+.chapter-viewer-panel {
+  overflow: hidden;
+}
+
+.sticky-viewer-heading {
+  position: relative;
+  z-index: 8;
+  box-shadow: 0 1px 0 #dfe4ea;
+}
+
+.viewer-status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 0 0 auto;
+}
+
+.viewer-status span {
+  color: #8a93a1;
+  font-size: 9px;
+}
+
+.viewer-status strong {
+  display: inline-flex;
+  align-items: center;
+  min-width: 42px;
+  justify-content: center;
+  padding: 5px 7px;
+  border-radius: 7px;
+  background: #eef2ff;
+  color: #315efb;
+  font-size: 10px;
+}
+
+.chapter-scroll {
+  position: relative;
+  min-height: 0;
+  overflow: auto;
+  padding: 14px 18px 36px;
+  scroll-behavior: smooth;
+  background:
+    radial-gradient(circle at top, #f7f9fc 0, #eef2f6 42%, #e8edf2 100%);
+}
+
+.chapter-page-frame {
+  width: min(100%, 1020px);
+  margin: 0 auto 24px;
+  scroll-margin-top: 12px;
+}
+
+.chapter-page-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: min(100%, 980px);
+  margin: 0 auto 7px;
+  padding: 0 3px;
+  color: #7c8796;
+  font-size: 9px;
+}
+
+.chapter-page-paper {
+  position: relative;
+  width: min(100%, 980px);
+  margin: 0 auto;
+  overflow: hidden;
+  background: #fff;
+  border: 1px solid #ccd4de;
+  box-shadow: 0 10px 30px #1620331c;
+}
+
+.chapter-page-paper.portrait {
+  max-width: 880px;
+}
+
+.chapter-page-paper.landscape {
+  max-width: 1040px;
+}
+
+.page-load-sentinel {
+  min-height: 22px;
+  display: grid;
+  place-items: center;
+  color: #9aa3b1;
+  font-size: 9px;
+}
+
+.workspace-v3 .coordinate-block {
+  overflow: hidden;
+  border: 1px solid transparent;
+  background: transparent;
+}
+
+.workspace-v3 .coordinate-block:hover {
+  z-index: 8;
+  overflow: visible;
+  border-color: #b7c1d0;
+  background: #ffffffee;
+  box-shadow: 0 3px 10px #1720331a;
+}
+
+.workspace-v3 .coordinate-block.focused {
+  z-index: 9;
+  border-color: #315efb;
+  background: #f4f6ffff;
+  box-shadow: 0 0 0 3px #315efb20;
+}
+
+.workspace-v3 .coordinate-cropped-image {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.workspace-v3 .coordinate-text,
+.workspace-v3 .coordinate-table,
+.workspace-v3 .coordinate-block .semantic-heading {
+  margin: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  color: #1f2937;
+  font-size: clamp(7px, .62vw, 12px);
+  line-height: 1.28;
+  white-space: pre-wrap;
+}
+
+.workspace-v3 .coordinate-block .semantic-heading {
+  font-weight: 760;
+}
+
+.workspace-v3 .coordinate-table {
+  border: 1px solid #dfe4ea;
+  background: #fcfdff;
+}
+
+@media (max-width: 1180px) {
+  .chapter-pill { display: none; }
+  .chapter-scroll { padding-inline: 10px; }
+}
+
+@media print {
+  @page {
+    size: A4;
+    margin: 0;
+  }
+
+  body {
+    background: #fff !important;
+  }
+
+  .workspace-v3 .topbar,
+  .workspace-v3 .document-pane,
+  .workspace-v3 .chat-pane,
+  .workspace-v3 .resize-handle,
+  .workspace-v3 .viewer-heading,
+  .workspace-v3 .page-load-sentinel,
+  .workspace-v3 .chapter-page-toolbar {
+    display: none !important;
+  }
+
+  .workspace-v3,
+  .workspace-v3 .workspace-grid,
+  .workspace-v3 .viewer-pane,
+  .workspace-v3 .viewer-scroll {
+    display: block !important;
+    width: 100% !important;
+    height: auto !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    overflow: visible !important;
+    background: #fff !important;
+  }
+
+  .chapter-page-frame {
+    width: 210mm !important;
+    min-height: 297mm;
+    margin: 0 !important;
+    break-after: page;
+    page-break-after: always;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+  }
+
+  .chapter-page-paper {
+    width: 210mm !important;
+    max-width: 210mm !important;
+    max-height: 297mm !important;
+    border: 0 !important;
+    box-shadow: none !important;
+  }
+}

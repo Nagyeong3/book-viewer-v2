@@ -1,3 +1,4 @@
+from pathlib import Path
 from functools import lru_cache
 from typing import Literal
 
@@ -5,15 +6,19 @@ from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
+BACKEND_DIR = Path(__file__).resolve().parents[2]
+
 class Settings(BaseSettings):
-    model_config = SettingsConfigDict(env_file=".env", extra="ignore")
+    model_config = SettingsConfigDict(env_file=BACKEND_DIR / ".env", extra="ignore")
 
     app_name: str = "Book Viewer V2"
     app_env: Literal["development", "test", "production"] = "development"
+    app_profile: Literal["real", "mock"] = "real"
     app_host: str = "0.0.0.0"
     app_port: int = Field(default=9056, ge=1, le=65535)
     log_level: str = "INFO"
     enable_api_docs: bool = False
+    cors_allowed_origins: str = "http://127.0.0.1:3000,http://localhost:3000"
 
     database_url: str | None = None
     database_min_pool_size: int = Field(default=1, ge=1, le=50)
@@ -26,6 +31,9 @@ class Settings(BaseSettings):
     elasticsearch_timeout: float = Field(default=30.0, gt=0, le=300)
     es_document_alias: str = "rag-documents"
     es_maintenance_alias: str = "rag-maintenance"
+
+    seaweedfs_master_url: str | None = None
+    seaweedfs_filer_url: str | None = None
 
     embedding_provider: str = "vllm"
     embedding_base_url: str | None = None
@@ -53,6 +61,10 @@ class Settings(BaseSettings):
     llm_temperature: float = Field(default=0.0, ge=0, le=2)
     llm_max_tokens: int = Field(default=8192, ge=1, le=65536)
 
+    @property
+    def cors_origins(self) -> list[str]:
+        return [item.strip() for item in self.cors_allowed_origins.split(",") if item.strip()]
+
     @field_validator("log_level")
     @classmethod
     def validate_log_level(cls, value: str) -> str:
@@ -66,6 +78,8 @@ class Settings(BaseSettings):
         "elasticsearch_url",
         "elasticsearch_username",
         "elasticsearch_password",
+        "seaweedfs_master_url",
+        "seaweedfs_filer_url",
         "embedding_base_url",
         "embedding_api_key",
         "litellm_base_url",

@@ -32,6 +32,10 @@ def test_viewer_endpoints() -> None:
         contents = test_client.get("/api/documents/1/contents?page=4")
         assert [item["id"] for item in contents.json()] == [14, 15]
 
+        languages = test_client.get("/api/documents/1/translation-languages")
+        assert languages.status_code == 200
+        assert languages.json() == ["en", "fil", "pl"]
+
         content = test_client.get("/api/documents/1/contents/13")
         assert content.status_code == 200
         assert content.json()["bbox"] is None

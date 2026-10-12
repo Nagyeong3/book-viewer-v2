@@ -1,0 +1,2741 @@
+/* Final prototype visual system: reference-informed, not a replica. */
+:root {
+  --fp-bg: #f4f6f9;
+  --fp-panel: #ffffff;
+  --fp-line: #e4e8ef;
+  --fp-line-strong: #d7dde7;
+  --fp-ink: #172033;
+  --fp-muted: #7a8493;
+  --fp-accent: #2f5bea;
+  --fp-accent-soft: #eef3ff;
+  --fp-success: #26a269;
+  --fp-shadow: 0 14px 34px rgba(29, 42, 68, .08);
+}
+
+body {
+  background: var(--fp-bg);
+}
+
+.workspace-shell.workspace-v3 {
+  min-height: 100vh;
+  padding: 0;
+  background: var(--fp-bg);
+}
+
+.workspace-v3 .product-topbar {
+  height: 56px;
+  min-height: 56px;
+  margin: 0;
+  padding: 0 18px;
+  border: 0;
+  border-bottom: 1px solid var(--fp-line);
+  border-radius: 0;
+  background: rgba(255,255,255,.98);
+  color: var(--fp-ink);
+  box-shadow: 0 1px 0 rgba(29,42,68,.02);
+}
+
+.workspace-v3 .brand-block {
+  display: flex;
+  align-items: center !important;
+  gap: 10px !important;
+  min-width: 0;
+}
+
+.workspace-v3 .brand-mark {
+  display: grid;
+  width: 28px;
+  height: 28px;
+  place-items: center;
+  flex: 0 0 auto;
+  border-radius: 9px;
+  background: linear-gradient(145deg, #315efb, #2448c8);
+  color: white !important;
+  font-size: 12px !important;
+  font-weight: 800;
+  box-shadow: 0 6px 16px rgba(49,94,251,.22);
+}
+
+.workspace-v3 .brand-copy {
+  min-width: 0;
+  display: grid !important;
+  gap: 1px;
+}
+
+.workspace-v3 .brand-copy strong {
+  overflow: hidden;
+  color: var(--fp-ink);
+  font-size: 13px;
+  font-weight: 750;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.workspace-v3 .brand-copy small {
+  overflow: hidden;
+  max-width: 360px;
+  color: var(--fp-muted);
+  font-size: 9px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.workspace-v3 .topbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.workspace-v3 .chapter-pill,
+.workspace-v3 .status-pill,
+.workspace-v3 .topbar-ghost {
+  min-height: 30px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid var(--fp-line);
+  border-radius: 9px;
+  background: #fff;
+  color: #435067;
+  box-shadow: none;
+}
+
+.workspace-v3 .chapter-pill {
+  max-width: 330px;
+  padding: 0 10px;
+  font-size: 10px;
+}
+
+.workspace-v3 .chapter-pill > span {
+  color: #9aa3b0;
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: .03em;
+  text-transform: uppercase;
+}
+
+.workspace-v3 .status-pill {
+  padding: 0 10px;
+  color: #40506b;
+  font-size: 10px;
+}
+
+.workspace-v3 .status-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--fp-success);
+}
+
+.workspace-v3 .topbar-ghost {
+  padding: 0 10px;
+  font-size: 10px;
+  cursor: pointer;
+}
+
+.workspace-v3 .workspace-grid {
+  height: calc(100vh - 56px);
+  min-height: 620px;
+  gap: 0;
+  padding: 0;
+  background: var(--fp-bg);
+}
+
+.workspace-v3 .panel {
+  border: 0;
+  border-radius: 0;
+  background: var(--fp-panel);
+}
+
+.workspace-v3 .document-pane {
+  border-right: 1px solid var(--fp-line);
+  box-shadow: none;
+}
+
+.workspace-v3 .chat-pane {
+  border-left: 1px solid var(--fp-line);
+  box-shadow: none;
+}
+
+.workspace-v3 .resize-handle {
+  width: 6px;
+  background: #f6f7f9;
+  border-inline: 1px solid #eef1f4;
+}
+
+.workspace-v3 .resize-handle:hover {
+  background: #edf2ff;
+}
+
+.workspace-v3 .panel-heading {
+  min-height: 68px;
+  padding: 13px 14px 12px;
+  border-bottom: 1px solid var(--fp-line);
+  background: #fff;
+}
+
+.workspace-v3 .panel-eyebrow {
+  display: block;
+  margin-bottom: 3px;
+  color: #9aa3b1;
+  font-size: 8px;
+  font-weight: 750;
+  letter-spacing: .08em;
+}
+
+.workspace-v3 .panel-heading h2 {
+  margin: 0 0 3px;
+  color: #1f2a3d;
+  font-size: 13px;
+  letter-spacing: -.015em;
+}
+
+.workspace-v3 .panel-heading p {
+  font-size: 9px;
+  line-height: 1.45;
+}
+
+.workspace-v3 .icon-button {
+  width: 28px;
+  height: 28px;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--fp-line);
+  border-radius: 8px;
+  background: #fff;
+  color: #687386;
+}
+
+/* Left navigation */
+.workspace-v3 .document-picker {
+  padding: 10px 10px 8px;
+  border-bottom: 1px solid var(--fp-line);
+  background: #fbfcfd;
+}
+
+.workspace-v3 .document-search {
+  min-height: 34px;
+  margin-bottom: 8px;
+  border: 1px solid var(--fp-line-strong);
+  border-radius: 8px;
+  background: white;
+  font-size: 10px;
+}
+
+.workspace-v3 .scope-toolbar {
+  padding: 7px 8px;
+  border-color: var(--fp-line);
+  border-radius: 8px;
+  background: #f7f9fc;
+}
+
+.workspace-v3 .scope-toolbar strong {
+  font-size: 9px;
+}
+
+.workspace-v3 .scope-toolbar span,
+.workspace-v3 .scope-toolbar button {
+  font-size: 8px;
+}
+
+.workspace-v3 .document-list {
+  padding: 6px 4px 2px;
+  border-bottom: 0;
+}
+
+.workspace-v3 .document-list-row {
+  min-height: 48px;
+  margin-bottom: 3px;
+  border-radius: 8px;
+}
+
+.workspace-v3 .document-list-row.active-row {
+  border-color: #d8e0ff;
+  background: #f3f6ff;
+  box-shadow: inset 3px 0 0 var(--fp-accent);
+}
+
+.workspace-v3 .document-item {
+  min-height: 46px;
+  padding: 8px 8px 8px 5px;
+}
+
+.workspace-v3 .document-item strong {
+  font-size: 10px;
+}
+
+.workspace-v3 .document-item small {
+  margin-top: 2px;
+  font-size: 8px;
+}
+
+.workspace-v3 .scope-checkbox {
+  border-radius: 7px;
+}
+
+.workspace-v3 .checkbox-mark {
+  width: 16px;
+  height: 16px;
+  border-radius: 4px;
+  font-size: 9px;
+}
+
+.workspace-v3 .toc-section {
+  padding: 10px 9px 20px;
+  background: #fff;
+}
+
+.workspace-v3 .section-label {
+  margin: 3px 5px 8px;
+  font-size: 8px;
+  letter-spacing: .08em;
+}
+
+.workspace-v3 .toc-row {
+  grid-template-columns: 20px minmax(0, 1fr);
+}
+
+.workspace-v3 .toc-tree .toc-toggle {
+  width: 20px;
+  height: 26px;
+  border-radius: 6px;
+  font-size: 10px;
+}
+
+.workspace-v3 .toc-toggle-spacer {
+  width: 20px;
+  height: 26px;
+}
+
+.workspace-v3 .toc-tree .toc-link {
+  min-height: 26px;
+  padding: 5px 6px;
+  border-radius: 7px;
+  font-size: 9px;
+}
+
+.workspace-v3 .toc-tree .toc-link.active {
+  background: #eef3ff;
+  color: #2446c7;
+  box-shadow: inset 2px 0 0 var(--fp-accent);
+}
+
+.workspace-v3 .toc-tree button.active::before {
+  display: none;
+}
+
+.workspace-v3 .toc-tree small,
+.workspace-v3 .toc-num {
+  font-size: 8px;
+}
+
+/* Viewer */
+.workspace-v3 .chapter-viewer-panel {
+  background: #eef1f5;
+}
+
+.workspace-v3 .sticky-viewer-heading {
+  min-height: 68px;
+  padding: 12px 14px;
+  background: rgba(255,255,255,.98);
+  border-bottom: 1px solid var(--fp-line);
+  box-shadow: none;
+  backdrop-filter: blur(8px);
+}
+
+.workspace-v3 .viewer-heading h2 {
+  font-size: 13px;
+}
+
+.workspace-v3 .viewer-heading p {
+  font-size: 9px;
+}
+
+.workspace-v3 .viewer-status {
+  gap: 6px;
+}
+
+.workspace-v3 .viewer-status > span {
+  display: none;
+}
+
+.workspace-v3 .viewer-status strong,
+.viewer-print-button {
+  min-height: 28px;
+  border-radius: 8px;
+  font-size: 9px;
+}
+
+.workspace-v3 .viewer-status strong {
+  min-width: 42px;
+  border: 1px solid #dbe2ec;
+  background: #f8faff;
+  color: #315efb;
+}
+
+.workspace-v3 .chapter-scroll {
+  padding: 18px 22px 34px;
+  background:
+    linear-gradient(180deg, rgba(255,255,255,.7), rgba(255,255,255,0) 100px),
+    #eef1f5;
+}
+
+.workspace-v3 .chapter-page-frame {
+  width: min(100%, 1040px);
+  margin-bottom: 26px;
+}
+
+.workspace-v3 .chapter-page-toolbar {
+  width: min(100%, 960px);
+  min-height: 20px;
+  margin-bottom: 5px;
+  padding-inline: 2px;
+  color: #8a94a4;
+  font-size: 8px;
+}
+
+.workspace-v3 .chapter-page-paper {
+  border: 1px solid #d5dce6;
+  border-radius: 1px;
+  box-shadow: 0 14px 38px rgba(23, 32, 51, .10);
+}
+
+/* Assistant */
+.workspace-v3 .assistant-titlebar {
+  min-height: 52px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 10px 12px 8px;
+  border-bottom: 1px solid var(--fp-line);
+  background: #fff;
+}
+
+.workspace-v3 .assistant-titlebar > div {
+  min-width: 0;
+}
+
+.workspace-v3 .assistant-titlebar strong {
+  display: block;
+  overflow: hidden;
+  color: #243047;
+  font-size: 11px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.workspace-v3 .assistant-header {
+  min-height: 42px;
+  padding: 6px 10px;
+  border-bottom: 1px solid var(--fp-line);
+  background: #fbfcfe;
+}
+
+.workspace-v3 .assistant-tabs {
+  width: 100%;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 3px;
+  padding: 3px;
+  border: 1px solid var(--fp-line);
+  border-radius: 8px;
+  background: #f2f4f7;
+}
+
+.workspace-v3 .assistant-tabs button {
+  min-height: 27px;
+  border-radius: 6px;
+  font-size: 9px;
+}
+
+.workspace-v3 .assistant-tabs button.active {
+  background: #fff;
+  color: #26344e;
+  box-shadow: 0 1px 3px rgba(23,32,51,.08);
+}
+
+.workspace-v3 .chat-controls {
+  padding: 8px 10px;
+  background: #fff;
+}
+
+.workspace-v3 .segmented {
+  border-radius: 7px;
+}
+
+.workspace-v3 .segmented button {
+  padding: 5px 8px;
+  font-size: 8px;
+}
+
+.workspace-v3 .chat-controls label,
+.workspace-v3 .chat-controls select {
+  font-size: 8px;
+}
+
+.workspace-v3 .source-dock {
+  padding: 9px 10px 8px;
+}
+
+.workspace-v3 .source-dock-heading strong {
+  font-size: 10px;
+}
+
+.workspace-v3 .source-dock-heading small,
+.workspace-v3 .source-strip small {
+  font-size: 8px;
+}
+
+.workspace-v3 .source-strip button {
+  border-radius: 8px;
+  background: #fbfcfe;
+}
+
+.workspace-v3 .chat-log {
+  padding: 12px 11px;
+  background: #f7f9fc;
+}
+
+.workspace-v3 .chat-turn {
+  margin-bottom: 14px;
+  padding-block: 0 8px;
+}
+
+.workspace-v3 .user-message {
+  margin-left: 34px;
+  padding: 8px 10px;
+  border-radius: 12px 12px 3px 12px;
+  background: #315efb;
+  font-size: 10px;
+  box-shadow: none;
+}
+
+.workspace-v3 .assistant-message {
+  margin-right: 16px;
+  padding: 9px 10px;
+  border: 1px solid var(--fp-line);
+  border-radius: 3px 12px 12px 12px;
+  background: #fff;
+  font-size: 10px;
+  box-shadow: none;
+}
+
+.workspace-v3 .answer-text {
+  line-height: 1.62;
+}
+
+.workspace-v3 .question-form {
+  padding: 10px;
+  background: #fff;
+  box-shadow: 0 -1px 0 var(--fp-line);
+}
+
+.workspace-v3 .question-form textarea {
+  min-height: 76px;
+  border-radius: 9px;
+  background: #fbfcfe;
+  font-size: 10px;
+}
+
+.workspace-v3 .question-form span,
+.workspace-v3 .question-form button {
+  font-size: 8px;
+}
+
+.workspace-v3 .question-form button {
+  min-height: 28px;
+  padding-inline: 10px;
+  border-radius: 7px;
+}
+
+/* Floating index status: quieter and aligned with product chrome */
+.index-manager-trigger {
+  right: 14px;
+  bottom: 14px;
+  min-height: 34px;
+  padding-inline: 10px;
+  border-color: var(--fp-line-strong);
+  border-radius: 10px;
+  box-shadow: 0 8px 22px rgba(23,32,51,.12);
+  font-size: 9px;
+}
+
+.index-manager-trigger small {
+  font-size: 8px;
+}
+
+.index-floating-alert {
+  right: 14px;
+  bottom: 58px;
+  border-radius: 10px;
+  box-shadow: 0 12px 30px rgba(23,32,51,.13);
+}
+
+/* Modal tone */
+.index-manager-backdrop {
+  background: rgba(20, 29, 45, .28);
+  backdrop-filter: blur(4px);
+}
+
+.index-manager-panel {
+  border-radius: 14px;
+  border-color: var(--fp-line-strong);
+  box-shadow: 0 30px 80px rgba(23,32,51,.24);
+}
+
+@media (max-width: 1180px) {
+  .workspace-v3 .chapter-pill { display: none; }
+}
+
+@media (max-width: 900px) {
+  .workspace-v3 .workspace-grid {
+    height: auto;
+  }
+}
+
+@media print {
+  .workspace-v3 .assistant-titlebar {
+    display: none !important;
+  }
+}
+
+
+/* Stable grid placement: hidden side panels must not reflow the viewer into zero-width tracks. */
+.workspace-v3 .document-pane { grid-column: 1; }
+.workspace-v3 .toc-resize-handle { grid-column: 2; }
+.workspace-v3 .viewer-pane { grid-column: 3; }
+.workspace-v3 .chat-resize-handle { grid-column: 4; }
+.workspace-v3 .chat-pane { grid-column: 5; }
+
+/* Productized document readiness states */
+.workspace-v3 .document-title-line {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.workspace-v3 .document-title-line strong {
+  min-width: 0;
+  flex: 1;
+}
+
+.workspace-v3 .document-index-badge {
+  display: inline-flex;
+  align-items: center;
+  flex: 0 0 auto;
+  min-height: 18px;
+  padding: 0 6px;
+  border-radius: 999px;
+  font-size: 7px;
+  font-weight: 750;
+  letter-spacing: -.01em;
+}
+
+.workspace-v3 .document-index-badge.ready {
+  background: #eaf8f1;
+  color: #18794e;
+}
+
+.workspace-v3 .document-index-badge.running {
+  background: #eef3ff;
+  color: #315efb;
+}
+
+.workspace-v3 .document-index-badge.missing {
+  background: #fff4df;
+  color: #a76508;
+}
+
+/* Vector DB status now belongs to global product chrome, not over the composer. */
+.topbar-index-button {
+  min-height: 30px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 10px;
+  border: 1px solid var(--fp-line);
+  border-radius: 9px;
+  background: #fff;
+  color: #435067;
+  font: inherit;
+  font-size: 10px;
+  cursor: pointer;
+}
+
+.topbar-index-button:hover {
+  border-color: #c8d3e4;
+  background: #f8faff;
+}
+
+.topbar-index-button small {
+  padding-left: 2px;
+  color: #8b95a4;
+  font-size: 8px;
+}
+
+/* Legacy floating entry point is intentionally retired. */
+.index-manager-trigger {
+  display: none !important;
+}
+
+/* Slightly stronger hierarchy for a sellable app feel */
+.workspace-v3 .source-dock-heading {
+  align-items: center;
+}
+
+.workspace-v3 .source-strip {
+  gap: 6px;
+}
+
+.workspace-v3 .source-strip button {
+  min-height: 54px;
+}
+
+.workspace-v3 .question-form textarea:disabled {
+  background: #f3f5f8;
+  color: #98a1af;
+}
+
+@media (max-width: 1180px) {
+  .workspace-v3 .document-pane { grid-column: 1; }
+  .workspace-v3 .viewer-pane { grid-column: 3; }
+  .workspace-v3 .chat-pane { grid-column: 1 / -1; }
+}
+
+@media (max-width: 760px) {
+  .workspace-v3 .document-pane,
+  .workspace-v3 .viewer-pane,
+  .workspace-v3 .chat-pane {
+    grid-column: auto;
+  }
+}
+
+
+/* Viewer hamburger navigation */
+.workspace-v3 .viewer-heading-main {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.workspace-v3 .viewer-heading-main > div {
+  min-width: 0;
+}
+
+.workspace-v3 .viewer-menu-button {
+  width: 30px;
+  height: 30px;
+  display: grid;
+  place-content: center;
+  gap: 3px;
+  flex: 0 0 auto;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  background: transparent;
+  cursor: pointer;
+}
+
+.workspace-v3 .viewer-menu-button:hover {
+  border-color: var(--fp-line);
+  background: #f7f9fc;
+}
+
+.workspace-v3 .viewer-menu-button span {
+  width: 14px;
+  height: 1.5px;
+  border-radius: 2px;
+  background: #566176;
+}
+
+/* Assistant settings become secondary controls instead of permanent chrome. */
+.workspace-v3 .assistant-settings {
+  position: relative;
+  margin-left: auto;
+}
+
+.workspace-v3 .assistant-settings > summary {
+  list-style: none;
+  min-height: 27px;
+  display: inline-flex;
+  align-items: center;
+  padding: 0 8px;
+  border: 1px solid var(--fp-line);
+  border-radius: 7px;
+  background: #fff;
+  color: #687386;
+  font-size: 8px;
+  cursor: pointer;
+}
+
+.workspace-v3 .assistant-settings > summary::-webkit-details-marker {
+  display: none;
+}
+
+.workspace-v3 .assistant-settings[open] > summary {
+  border-color: #c7d3ff;
+  background: #f6f8ff;
+  color: #315efb;
+}
+
+.workspace-v3 .assistant-settings > label {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  z-index: 20;
+  min-width: 150px;
+  display: grid;
+  gap: 6px;
+  padding: 10px;
+  border: 1px solid var(--fp-line);
+  border-radius: 9px;
+  background: #fff;
+  color: #667085;
+  box-shadow: 0 12px 28px rgba(23,32,51,.12);
+  font-size: 8px;
+}
+
+.workspace-v3 .assistant-settings select {
+  min-height: 28px;
+  border: 1px solid var(--fp-line-strong);
+  border-radius: 7px;
+  background: #fff;
+}
+
+/* Source evidence is compact but inspectable. */
+.workspace-v3 details.source-dock {
+  padding: 0;
+  border-bottom: 1px solid var(--fp-line);
+  background: #fff;
+}
+
+.workspace-v3 .source-dock-heading {
+  min-height: 50px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 9px 10px;
+  cursor: pointer;
+  list-style: none;
+}
+
+.workspace-v3 .source-dock-heading::-webkit-details-marker {
+  display: none;
+}
+
+.workspace-v3 .source-dock-heading::after {
+  content: "⌄";
+  color: #98a2b3;
+  font-size: 10px;
+}
+
+.workspace-v3 details.source-dock:not([open]) .source-dock-heading::after {
+  content: "›";
+}
+
+.workspace-v3 .source-dock-heading > div {
+  min-width: 0;
+  flex: 1;
+}
+
+.workspace-v3 .source-count {
+  min-width: 20px;
+  height: 20px;
+  display: inline-grid;
+  place-items: center;
+  border-radius: 999px;
+  background: #eef2f6;
+  color: #667085;
+  font-size: 8px;
+}
+
+.workspace-v3 .source-strip {
+  padding: 0 10px 10px;
+}
+
+/* Softer, more product-like chat balance */
+.workspace-v3 .user-message {
+  width: fit-content;
+  max-width: 86%;
+  margin-left: auto;
+  padding: 8px 10px;
+  background: #2f5bea;
+  border-radius: 12px 12px 3px 12px;
+}
+
+.workspace-v3 .assistant-message {
+  max-width: 94%;
+  margin-right: auto;
+  border-color: #e5e9f0;
+  background: #fff;
+}
+
+/* Agent process as a visual execution timeline */
+.workspace-v3 .process-pane {
+  min-height: 0;
+  overflow: auto;
+  padding: 12px;
+  background: #f8fafc;
+}
+
+.workspace-v3 .process-overview {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 12px;
+  padding: 10px 11px;
+  border: 1px solid var(--fp-line);
+  border-radius: 10px;
+  background: #fff;
+}
+
+.workspace-v3 .process-overview > div {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.workspace-v3 .process-overview strong {
+  font-size: 10px;
+}
+
+.workspace-v3 .process-overview small {
+  color: #7b8595;
+  font-size: 8px;
+}
+
+.workspace-v3 .process-live-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #98a2b3;
+}
+
+.workspace-v3 .process-live-dot.running {
+  background: #315efb;
+  box-shadow: 0 0 0 4px rgba(49,94,251,.10);
+}
+
+.workspace-v3 .process-live-dot.done {
+  background: #26a269;
+}
+
+.workspace-v3 .agent-step-list {
+  position: relative;
+  display: grid;
+  gap: 4px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.workspace-v3 .agent-step-list::before {
+  content: "";
+  position: absolute;
+  left: 13px;
+  top: 18px;
+  bottom: 18px;
+  width: 1px;
+  background: #dde3eb;
+}
+
+.workspace-v3 .agent-step-list li {
+  position: relative;
+  display: grid;
+  grid-template-columns: 27px minmax(0,1fr);
+  gap: 9px;
+  align-items: start;
+  padding: 8px 9px 8px 0;
+}
+
+.workspace-v3 .agent-step-list li > span {
+  z-index: 1;
+  width: 27px;
+  height: 27px;
+  display: grid;
+  place-items: center;
+  border: 1px solid #d7dee8;
+  border-radius: 50%;
+  background: #fff;
+  color: #7b8595;
+  font-size: 8px;
+  font-weight: 700;
+}
+
+.workspace-v3 .agent-step-list li.done > span {
+  border-color: #bfe6d2;
+  background: #eef9f3;
+  color: #18794e;
+}
+
+.workspace-v3 .agent-step-list li.running > span {
+  border-color: #c7d3ff;
+  background: #eef3ff;
+  color: #315efb;
+}
+
+.workspace-v3 .agent-step-list li > div {
+  min-width: 0;
+  padding-top: 2px;
+}
+
+.workspace-v3 .agent-step-list strong {
+  display: block;
+  margin-bottom: 3px;
+  color: #2d3a50;
+  font-size: 9px;
+}
+
+.workspace-v3 .agent-step-list small {
+  display: block;
+  color: #7a8494;
+  font-size: 8px;
+  line-height: 1.45;
+}
+
+.workspace-v3 .process-query {
+  display: grid;
+  gap: 4px;
+  margin-top: 12px;
+  padding: 9px 10px;
+  border: 1px solid var(--fp-line);
+  border-radius: 9px;
+  background: #fff;
+}
+
+.workspace-v3 .process-query span {
+  color: #8b95a4;
+  font-size: 8px;
+}
+
+.workspace-v3 .process-query strong {
+  overflow-wrap: anywhere;
+  color: #354052;
+  font-size: 9px;
+}
+
+
+/* Final-detail pass: balanced spacing, consistent action language and subtle interaction states. */
+.workspace-v3 button,
+.topbar-index-button,
+.viewer-print-button {
+  -webkit-tap-highlight-color: transparent;
+}
+
+.workspace-v3 button:focus-visible,
+.topbar-index-button:focus-visible,
+.viewer-print-button:focus-visible,
+.index-manager-panel button:focus-visible {
+  outline: 2px solid rgba(47, 91, 234, .34);
+  outline-offset: 2px;
+}
+
+.button-icon {
+  display: block;
+  flex: 0 0 auto;
+}
+
+.workspace-v3 .topbar-ghost,
+.topbar-index-button,
+.viewer-print-button,
+.workspace-v3 .send-button,
+.workspace-v3 .assistant-settings > summary {
+  transition: background .14s ease, border-color .14s ease, color .14s ease, box-shadow .14s ease, transform .14s ease;
+}
+
+.topbar-index-button {
+  min-height: 30px;
+  color: #172033;
+  font-size: 10px;
+  font-weight: 600;
+}
+
+.topbar-index-button .index-dot {
+  width: 6px;
+  height: 6px;
+}
+
+.topbar-index-button small {
+  color: #6f7a8b;
+  font-size: 9px;
+  font-weight: 600;
+}
+
+.topbar-index-button:hover,
+.workspace-v3 .topbar-ghost:hover,
+.viewer-print-button:hover {
+  border-color: #cbd4e0;
+  background: #f8fafc;
+  color: #172033;
+}
+
+.viewer-print-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding-inline: 10px;
+  color: #263246;
+  font-size: 9px;
+  font-weight: 650;
+}
+
+.workspace-v3 .icon-button {
+  transition: background .14s ease, border-color .14s ease, color .14s ease;
+}
+
+.workspace-v3 .icon-button:hover {
+  border-color: #d4dbe5;
+  background: #f8fafc;
+  color: #344054;
+}
+
+.workspace-v3 .icon-button-back svg {
+  transform: rotate(180deg);
+}
+
+/* Chat follows the latest active turn while preserving manual scroll-up. */
+.workspace-v3 .chat-log {
+  scroll-behavior: smooth;
+  scrollbar-width: thin;
+  scrollbar-color: #d7dde6 transparent;
+}
+
+.workspace-v3 .chat-log::-webkit-scrollbar,
+.workspace-v3 .toc-section::-webkit-scrollbar,
+.workspace-v3 .document-list::-webkit-scrollbar,
+.workspace-v3 .chapter-scroll::-webkit-scrollbar {
+  width: 7px;
+}
+
+.workspace-v3 .chat-log::-webkit-scrollbar-thumb,
+.workspace-v3 .toc-section::-webkit-scrollbar-thumb,
+.workspace-v3 .document-list::-webkit-scrollbar-thumb,
+.workspace-v3 .chapter-scroll::-webkit-scrollbar-thumb {
+  border: 2px solid transparent;
+  border-radius: 10px;
+  background: #cfd6e0;
+  background-clip: padding-box;
+}
+
+.workspace-v3 .chat-turn {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 28px;
+  padding: 0;
+}
+
+.workspace-v3 .chat-turn:last-child {
+  margin-bottom: 8px;
+}
+
+.workspace-v3 .user-message {
+  box-shadow: 0 4px 12px rgba(47,91,234,.12);
+}
+
+.workspace-v3 .assistant-message {
+  padding: 11px 12px;
+  box-shadow: 0 1px 2px rgba(23,32,51,.025);
+}
+
+.workspace-v3 .answer-text {
+  line-height: 1.72;
+}
+
+.workspace-v3 .question-form {
+  border-top: 1px solid #e6eaf0;
+}
+
+.workspace-v3 .question-form textarea {
+  transition: border-color .14s ease, box-shadow .14s ease, background .14s ease;
+}
+
+.workspace-v3 .question-form textarea:focus {
+  border-color: #9db0ff;
+  box-shadow: 0 0 0 3px rgba(49,94,251,.08);
+}
+
+.workspace-v3 .send-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-width: 78px;
+  background: #2f5bea;
+}
+
+.workspace-v3 .send-button:not(:disabled):hover {
+  background: #274fd0;
+  transform: translateY(-1px);
+}
+
+.workspace-v3 .send-button:disabled {
+  background: #b7bec9;
+  transform: none;
+}
+
+.workspace-v3 .assistant-settings > summary {
+  gap: 5px;
+  color: #4d5a70;
+}
+
+.workspace-v3 .assistant-settings > summary:hover {
+  border-color: #ccd5e1;
+  background: #f8fafc;
+  color: #263246;
+}
+
+/* Reduce visual noise while keeping the evidence hierarchy explicit. */
+.workspace-v3 .source-dock-heading {
+  padding-inline: 12px;
+}
+
+.workspace-v3 .source-dock-heading strong {
+  color: #263246;
+  font-weight: 700;
+}
+
+.workspace-v3 .source-dock-heading small {
+  margin-top: 2px;
+  color: #8a94a3;
+}
+
+.workspace-v3 .source-strip button {
+  border-color: #e3e8ef;
+  box-shadow: 0 1px 2px rgba(23,32,51,.025);
+}
+
+.workspace-v3 .source-strip button:hover {
+  border-color: #cbd6ff;
+  box-shadow: 0 5px 14px rgba(23,32,51,.055);
+}
+
+/* Unify top-bar actions so no single control looks bolted on. */
+.workspace-v3 .topbar-actions > *,
+.topbar-index-button {
+  white-space: nowrap;
+}
+
+.workspace-v3 .chapter-pill,
+.workspace-v3 .status-pill,
+.workspace-v3 .topbar-ghost,
+.topbar-index-button {
+  height: 30px;
+}
+
+.workspace-v3 .status-pill {
+  color: #344054;
+  font-weight: 600;
+}
+
+.workspace-v3 .status-pill > svg {
+  color: #52637b;
+}
+
+/* Small content polish */
+.workspace-v3 .document-index-badge {
+  font-weight: 700;
+}
+
+.workspace-v3 .viewer-menu-button {
+  color: #475467;
+}
+
+.workspace-v3 .viewer-menu-button:hover span {
+  background: #263246;
+}
+
+.workspace-v3 .assistant-tabs button,
+.workspace-v3 .segmented button {
+  font-weight: 600;
+}
+
+.workspace-v3 .assistant-tabs button.active,
+.workspace-v3 .segmented button.active {
+  color: #172033;
+}
+
+.workspace-v3 .process-overview,
+.workspace-v3 .process-query,
+.workspace-v3 .source-strip button {
+  box-shadow: 0 1px 2px rgba(23,32,51,.025);
+}
+
+
+/* Viewer utility bar */
+.workspace-v3 .viewer-heading {
+  gap: 14px;
+}
+
+.workspace-v3 .viewer-toolbar {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  min-width: 0;
+}
+
+.workspace-v3 .viewer-search-control {
+  position: relative;
+  width: 210px;
+  min-height: 30px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 9px;
+  border: 1px solid var(--fp-line);
+  border-radius: 9px;
+  background: #fff;
+  color: #687386;
+}
+
+.workspace-v3 .viewer-search-control:focus-within {
+  border-color: #b8c6ff;
+  box-shadow: 0 0 0 3px rgba(49,94,251,.07);
+}
+
+.workspace-v3 .viewer-search-control input {
+  width: 100%;
+  min-width: 0;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: #263246;
+  font: inherit;
+  font-size: 9px;
+}
+
+.workspace-v3 .viewer-search-control input::placeholder {
+  color: #98a2b3;
+}
+
+.workspace-v3 .viewer-search-results {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  right: 0;
+  z-index: 40;
+  max-height: 280px;
+  overflow: auto;
+  padding: 5px;
+  border: 1px solid #dde3ec;
+  border-radius: 10px;
+  background: #fff;
+  box-shadow: 0 14px 34px rgba(23,32,51,.14);
+}
+
+.workspace-v3 .viewer-search-results button {
+  width: 100%;
+  display: grid;
+  grid-template-columns: minmax(0,1fr) auto;
+  gap: 8px;
+  padding: 8px;
+  border: 0;
+  border-radius: 7px;
+  background: transparent;
+  color: #344054;
+  text-align: left;
+  cursor: pointer;
+}
+
+.workspace-v3 .viewer-search-results button:hover {
+  background: #f5f7fb;
+}
+
+.workspace-v3 .viewer-search-results strong {
+  overflow: hidden;
+  color: #344054;
+  font-size: 8px;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.workspace-v3 .viewer-search-results small {
+  color: #8a94a3;
+  font-size: 8px;
+}
+
+.workspace-v3 .viewer-search-empty {
+  padding: 12px 9px;
+  color: #8a94a3;
+  font-size: 8px;
+  text-align: center;
+}
+
+.workspace-v3 .translate-controls,
+.workspace-v3 .zoom-controls {
+  min-height: 30px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.workspace-v3 .translate-toggle,
+.workspace-v3 .zoom-controls button,
+.workspace-v3 .translate-controls select {
+  height: 30px;
+  border: 1px solid var(--fp-line);
+  border-radius: 8px;
+  background: #fff;
+  color: #3d4a5f;
+  font: inherit;
+  font-size: 9px;
+}
+
+.workspace-v3 .translate-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 0 9px;
+  cursor: pointer;
+}
+
+.workspace-v3 .translate-toggle.active {
+  border-color: #b9c8ff;
+  background: #eef3ff;
+  color: #2446c7;
+}
+
+.workspace-v3 .translate-controls select {
+  max-width: 104px;
+  padding: 0 24px 0 8px;
+}
+
+.workspace-v3 .zoom-controls {
+  gap: 0;
+  overflow: hidden;
+  border: 1px solid var(--fp-line);
+  border-radius: 8px;
+  background: #fff;
+}
+
+.workspace-v3 .zoom-controls button {
+  width: 28px;
+  border: 0;
+  border-radius: 0;
+  cursor: pointer;
+}
+
+.workspace-v3 .zoom-controls button:hover {
+  background: #f5f7fa;
+}
+
+.workspace-v3 .zoom-controls span {
+  min-width: 42px;
+  padding: 0 5px;
+  color: #4d5a70;
+  font-size: 8px;
+  text-align: center;
+}
+
+.workspace-v3 .viewer-status {
+  flex: 0 0 auto;
+}
+
+/* AI translation interaction is invisible until the feature is enabled. */
+.workspace-v3 .coordinate-block:not(.translation-target):not(.focused) {
+  transition: none;
+}
+
+.workspace-v3 .coordinate-block.translation-target {
+  cursor: help;
+  transition: border-color .12s ease, background .12s ease, box-shadow .12s ease;
+}
+
+.workspace-v3 .coordinate-block.translation-target:hover {
+  z-index: 15;
+  overflow: visible;
+  border-color: #7694ff;
+  background: rgba(238,243,255,.36);
+  box-shadow: 0 0 0 2px rgba(49,94,251,.10);
+}
+
+.workspace-v3 .translation-panel {
+  position: absolute;
+  right: 18px;
+  bottom: 18px;
+  z-index: 55;
+  width: min(390px, calc(100% - 36px));
+  max-height: min(480px, calc(100% - 110px));
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border: 1px solid #d9e1ec;
+  border-radius: 13px;
+  background: rgba(255,255,255,.985);
+  box-shadow: 0 18px 44px rgba(23,32,51,.18);
+  backdrop-filter: blur(10px);
+}
+
+.workspace-v3 .translation-panel header {
+  min-height: 43px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 0 12px;
+  border-bottom: 1px solid #e7ebf1;
+}
+
+.workspace-v3 .translation-panel header > div {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  color: #2c3b55;
+}
+
+.workspace-v3 .translation-panel header strong {
+  font-size: 10px;
+}
+
+.workspace-v3 .translation-panel header button {
+  width: 28px;
+  height: 28px;
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-radius: 7px;
+  background: transparent;
+  color: #7a8494;
+  cursor: pointer;
+}
+
+.workspace-v3 .translation-panel header button:hover {
+  background: #f3f5f8;
+  color: #344054;
+}
+
+.workspace-v3 .translation-source,
+.workspace-v3 .translation-result {
+  padding: 11px 12px;
+}
+
+.workspace-v3 .translation-source {
+  border-bottom: 1px solid #edf0f4;
+  background: #fafbfd;
+}
+
+.workspace-v3 .translation-source > span,
+.workspace-v3 .translation-result > span {
+  display: block;
+  margin-bottom: 6px;
+  color: #8b95a4;
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: .04em;
+}
+
+.workspace-v3 .translation-panel p {
+  margin: 0;
+  color: #344054;
+  font-size: 10px;
+  line-height: 1.65;
+  white-space: pre-wrap;
+}
+
+.workspace-v3 .translation-loading {
+  color: #52637b !important;
+}
+
+.workspace-v3 .translation-error {
+  color: #b54747 !important;
+}
+
+.workspace-v3 .translation-panel footer {
+  padding: 8px 12px;
+  border-top: 1px solid #edf0f4;
+  background: #fafbfd;
+  color: #98a2b3;
+  font-size: 8px;
+}
+
+/* AI scope is contextual information, not a top-bar action. */
+.workspace-v3 .assistant-scope-meta {
+  display: block;
+  margin-top: 3px;
+  color: #7f8998;
+  font-size: 8px;
+  font-weight: 500;
+}
+
+/* Icon-only composer action */
+.workspace-v3 .icon-only-send {
+  width: 42px;
+  min-width: 42px;
+  height: 38px;
+  min-height: 38px;
+  padding: 0;
+  border-radius: 10px;
+}
+
+.workspace-v3 .icon-only-send svg {
+  width: 19px;
+  height: 19px;
+}
+
+/* Make toolbar actions feel like one system. */
+.topbar-index-button,
+.viewer-print-button,
+.workspace-v3 .translate-toggle,
+.workspace-v3 .zoom-controls,
+.workspace-v3 .viewer-search-control {
+  box-shadow: none;
+}
+
+.topbar-index-button {
+  color: #172033 !important;
+  font-family: inherit !important;
+  font-size: 10px !important;
+  font-weight: 600 !important;
+  letter-spacing: 0 !important;
+}
+
+.topbar-index-button span,
+.topbar-index-button small {
+  font-family: inherit !important;
+}
+
+@media (max-width: 1320px) {
+  .workspace-v3 .viewer-search-control {
+    width: 170px;
+  }
+
+  .workspace-v3 .translate-toggle span {
+    display: none;
+  }
+}
+
+@media (max-width: 1120px) {
+  .workspace-v3 .viewer-search-control {
+    width: 150px;
+  }
+
+  .workspace-v3 .translate-controls select {
+    max-width: 86px;
+  }
+}
+
+
+/* Search is scoped to AI-selected documents and lives in global chrome. */
+.scope-search-control {
+  position: relative;
+  width: 240px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 9px;
+  border: 1px solid var(--fp-line);
+  border-radius: 9px;
+  background: #fff;
+  color: #687386;
+}
+
+.scope-search-control:focus-within {
+  border-color: #b8c6ff;
+  box-shadow: 0 0 0 3px rgba(49,94,251,.07);
+}
+
+.scope-search-control input {
+  width: 100%;
+  min-width: 0;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: #172033;
+  font: inherit;
+  font-size: 9px;
+}
+
+.scope-search-control input::placeholder {
+  color: #98a2b3;
+}
+
+.scope-search-control input:disabled {
+  cursor: not-allowed;
+  color: #98a2b3;
+}
+
+.scope-search-results {
+  position: absolute;
+  top: calc(100% + 7px);
+  left: 0;
+  z-index: 90;
+  width: 360px;
+  max-height: 360px;
+  overflow: auto;
+  padding: 6px;
+  border: 1px solid #dce3ed;
+  border-radius: 11px;
+  background: #fff;
+  box-shadow: 0 18px 44px rgba(23,32,51,.16);
+}
+
+.scope-search-results button {
+  width: 100%;
+  display: grid;
+  grid-template-columns: minmax(0,1fr) auto;
+  gap: 10px;
+  align-items: center;
+  padding: 9px 10px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: #344054;
+  text-align: left;
+  cursor: pointer;
+}
+
+.scope-search-results button:hover {
+  background: #f5f7fb;
+}
+
+.scope-search-results button > span {
+  min-width: 0;
+  display: grid;
+  gap: 2px;
+  color: inherit;
+}
+
+.scope-search-results strong {
+  overflow: hidden;
+  color: #2d3748;
+  font-size: 9px;
+  font-weight: 650;
+  line-height: 1.4;
+}
+
+.scope-search-results small {
+  overflow: hidden;
+  color: #8a94a3;
+  font-size: 8px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.scope-search-results em {
+  color: #667085;
+  font-size: 8px;
+  font-style: normal;
+}
+
+.scope-search-empty {
+  padding: 14px 10px;
+  color: #8a94a3;
+  font-size: 8px;
+  text-align: center;
+}
+
+/* Translation popup is a movable floating tool window. */
+.workspace-v3 .translation-panel {
+  position: fixed;
+  right: auto;
+  bottom: auto;
+  z-index: 140;
+  width: min(440px, calc(100vw - 48px));
+  max-height: min(430px, calc(100vh - 80px));
+}
+
+.workspace-v3 .translation-panel header {
+  cursor: move;
+  user-select: none;
+  touch-action: none;
+}
+
+.workspace-v3 .translation-panel header > div {
+  min-width: 0;
+}
+
+.workspace-v3 .translation-panel header small {
+  margin-left: 3px;
+  color: #98a2b3;
+  font-size: 8px;
+  font-weight: 500;
+}
+
+/* Translation is click-triggered; hover only communicates clickability. */
+.workspace-v3 .coordinate-block.translation-target {
+  cursor: pointer;
+}
+
+.workspace-v3 .coordinate-block.translation-target:hover {
+  border-color: #7694ff;
+  background: rgba(238,243,255,.28);
+  box-shadow: 0 0 0 2px rgba(49,94,251,.08);
+}
+
+/* Vector DB action must inherit no legacy topbar gray text. */
+.topbar .topbar-index-button,
+.topbar .topbar-index-button > span,
+.topbar .topbar-index-button > small,
+.topbar .topbar-index-button .button-icon {
+  color: #172033 !important;
+}
+
+.topbar .topbar-index-button {
+  font-family: inherit !important;
+  font-size: 10px !important;
+  font-weight: 600 !important;
+  opacity: 1 !important;
+}
+
+.topbar .topbar-index-button > span {
+  font-size: 10px !important;
+  font-weight: 600 !important;
+}
+
+.topbar .topbar-index-button > small {
+  font-size: 9px !important;
+  font-weight: 600 !important;
+}
+
+/* Current-document search was retired in favor of selected-scope search. */
+.workspace-v3 .viewer-search-control,
+.workspace-v3 .viewer-search-results {
+  display: none !important;
+}
+
+@media (max-width: 1500px) {
+  .scope-search-control {
+    width: 205px;
+  }
+
+  .scope-search-results {
+    width: 330px;
+  }
+}
+
+@media (max-width: 1250px) {
+  .scope-search-control {
+    width: 180px;
+  }
+
+  .scope-search-control input {
+    font-size: 8px;
+  }
+}
+
+
+.topbar-index-slot {
+  display: inline-flex;
+  align-items: center;
+  flex: 0 0 auto;
+  color: inherit !important;
+  font-size: inherit !important;
+}
+
+
+/* Typography scale pass: raise product text ~2pt and rebalance control geometry. */
+.workspace-v3 {
+  font-size: 12px;
+}
+
+/* Top navigation / chrome */
+.workspace-v3 .brand-copy strong { font-size: 15px; }
+.workspace-v3 .brand-copy small { font-size: 11px; }
+.workspace-v3 .chapter-pill,
+.workspace-v3 .status-pill,
+.workspace-v3 .topbar-ghost,
+.topbar-index-button {
+  min-height: 34px;
+  height: 34px;
+  font-size: 12px !important;
+}
+.workspace-v3 .chapter-pill > span { font-size: 10px; }
+.topbar-index-button > span { font-size: 12px !important; }
+.topbar-index-button > small { font-size: 11px !important; }
+.scope-search-control {
+  height: 34px;
+  width: 260px;
+}
+.scope-search-control input { font-size: 11px; }
+.scope-search-results strong { font-size: 11px; }
+.scope-search-results small,
+.scope-search-results em,
+.scope-search-empty { font-size: 10px; }
+
+/* Panel headings */
+.workspace-v3 .panel-eyebrow { font-size: 10px; }
+.workspace-v3 .panel-heading h2 { font-size: 15px; }
+.workspace-v3 .panel-heading p { font-size: 11px; }
+.workspace-v3 .assistant-titlebar strong { font-size: 13px; }
+.workspace-v3 .assistant-scope-meta { font-size: 10px; }
+
+/* Left document navigation */
+.workspace-v3 .document-search {
+  min-height: 38px;
+  font-size: 12px;
+}
+.workspace-v3 .scope-toolbar {
+  padding: 9px 10px;
+}
+.workspace-v3 .scope-toolbar strong { font-size: 11px; }
+.workspace-v3 .scope-toolbar span,
+.workspace-v3 .scope-toolbar button { font-size: 10px; }
+.workspace-v3 .document-list-row { min-height: 54px; }
+.workspace-v3 .document-item { min-height: 52px; }
+.workspace-v3 .document-item strong { font-size: 12px; }
+.workspace-v3 .document-item small { font-size: 10px; }
+.workspace-v3 .document-index-badge {
+  min-height: 20px;
+  padding: 0 7px;
+  font-size: 9px;
+}
+.workspace-v3 .checkbox-mark {
+  width: 18px;
+  height: 18px;
+  font-size: 11px;
+}
+
+/* TOC */
+.workspace-v3 .section-label { font-size: 10px; }
+.workspace-v3 .toc-tree .toc-toggle {
+  width: 22px;
+  height: 30px;
+  font-size: 12px;
+}
+.workspace-v3 .toc-toggle-spacer {
+  width: 22px;
+  height: 30px;
+}
+.workspace-v3 .toc-tree .toc-link {
+  min-height: 30px;
+  padding: 6px 8px;
+  font-size: 11px;
+}
+.workspace-v3 .toc-tree small,
+.workspace-v3 .toc-num { font-size: 10px; }
+
+/* Viewer toolbar / controls */
+.workspace-v3 .viewer-heading h2 { font-size: 15px; }
+.workspace-v3 .viewer-heading p { font-size: 11px; }
+.workspace-v3 .viewer-menu-button {
+  width: 34px;
+  height: 34px;
+}
+.workspace-v3 .translate-toggle,
+.workspace-v3 .zoom-controls button,
+.workspace-v3 .translate-controls select {
+  height: 34px;
+  font-size: 11px;
+}
+.workspace-v3 .zoom-controls span { font-size: 10px; min-width: 46px; }
+.workspace-v3 .viewer-status strong {
+  min-height: 32px;
+  min-width: 46px;
+  font-size: 11px;
+}
+.viewer-print-button {
+  min-height: 34px;
+  font-size: 11px;
+}
+
+/* Page labels */
+.workspace-v3 .chapter-page-toolbar {
+  min-height: 24px;
+  font-size: 10px;
+}
+
+/* AI assistant controls */
+.workspace-v3 .assistant-tabs button {
+  min-height: 31px;
+  font-size: 11px;
+}
+.workspace-v3 .segmented button {
+  padding: 6px 10px;
+  font-size: 10px;
+}
+.workspace-v3 .assistant-settings > summary {
+  min-height: 31px;
+  font-size: 10px;
+}
+.workspace-v3 .assistant-settings > label {
+  min-width: 165px;
+  font-size: 10px;
+}
+.workspace-v3 .assistant-settings select {
+  min-height: 32px;
+  font-size: 10px;
+}
+
+/* Evidence / sources */
+.workspace-v3 .source-dock-heading strong { font-size: 12px; }
+.workspace-v3 .source-dock-heading small,
+.workspace-v3 .source-strip small { font-size: 10px; }
+.workspace-v3 .source-count {
+  min-width: 22px;
+  height: 22px;
+  font-size: 10px;
+}
+.workspace-v3 .source-strip button {
+  min-height: 60px;
+}
+.workspace-v3 .source-strip button strong { font-size: 11px; }
+
+/* Chat */
+.workspace-v3 .user-message,
+.workspace-v3 .assistant-message {
+  font-size: 12px;
+}
+.workspace-v3 .user-message {
+  padding: 10px 12px;
+}
+.workspace-v3 .assistant-message {
+  padding: 12px 14px;
+}
+.workspace-v3 .answer-text { line-height: 1.68; }
+.workspace-v3 .empty-chat strong { font-size: 12px; }
+.workspace-v3 .empty-chat p { font-size: 11px; }
+.workspace-v3 .question-form {
+  padding: 12px;
+}
+.workspace-v3 .question-form textarea {
+  min-height: 88px;
+  padding: 12px;
+  font-size: 12px;
+}
+.workspace-v3 .question-form span { font-size: 10px; }
+.workspace-v3 .icon-only-send {
+  width: 44px;
+  min-width: 44px;
+  height: 42px;
+  min-height: 42px;
+}
+.workspace-v3 .icon-only-send svg {
+  width: 21px;
+  height: 21px;
+}
+
+/* Agent process */
+.workspace-v3 .process-overview strong { font-size: 12px; }
+.workspace-v3 .process-overview small { font-size: 10px; }
+.workspace-v3 .agent-step-list li > span {
+  width: 30px;
+  height: 30px;
+  font-size: 10px;
+}
+.workspace-v3 .agent-step-list strong { font-size: 11px; }
+.workspace-v3 .agent-step-list small { font-size: 10px; }
+.workspace-v3 .process-query span { font-size: 10px; }
+.workspace-v3 .process-query strong { font-size: 11px; }
+
+/* Translation popup */
+.workspace-v3 .translation-panel header strong { font-size: 12px; }
+.workspace-v3 .translation-panel header small { font-size: 10px; }
+.workspace-v3 .translation-source > span,
+.workspace-v3 .translation-result > span { font-size: 10px; }
+.workspace-v3 .translation-panel p { font-size: 12px; }
+.workspace-v3 .translation-panel footer { font-size: 10px; }
+
+/* Index manager modal */
+.index-manager-panel h2 { font-size: 21px; }
+.index-manager-panel header p { font-size: 13px; }
+.index-eyebrow { font-size: 12px; }
+.index-summary span { font-size: 12px; }
+.index-summary strong { font-size: 16px; }
+.index-summary > button { min-height: 34px; font-size: 12px; }
+.index-document-main strong { font-size: 14px; }
+.index-document-main small { font-size: 11px; }
+.index-state-label { font-size: 12px; }
+.index-document-actions button {
+  min-height: 34px;
+  padding: 0 12px;
+  font-size: 12px;
+}
+.index-row-message { font-size: 11px; }
+.index-manager-panel > footer { font-size: 12px; }
+.index-manager-panel > footer button {
+  min-height: 34px;
+  font-size: 12px;
+}
+
+/* Keep spacing proportional after text enlargement */
+.workspace-v3 .panel-heading {
+  min-height: 74px;
+  padding: 15px 16px 13px;
+}
+.workspace-v3 .assistant-titlebar {
+  min-height: 58px;
+  padding: 11px 13px 9px;
+}
+.workspace-v3 .assistant-header {
+  min-height: 46px;
+  padding: 7px 10px;
+}
+.workspace-v3 .chat-controls {
+  padding: 9px 10px;
+}
+.workspace-v3 .source-dock-heading {
+  min-height: 56px;
+}
+.workspace-v3 .chapter-scroll {
+  padding-top: 20px;
+}
+
+@media (max-width: 1320px) {
+  .scope-search-control { width: 220px; }
+}
+
+
+/* Viewer-local AI reopen action: same visual language as print, always black text. */
+.workspace-v3 .viewer-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.workspace-v3 .viewer-ai-open-button {
+  min-height: 34px;
+  height: 34px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 0 11px;
+  border: 1px solid var(--fp-line);
+  border-radius: 8px;
+  background: #fff;
+  color: #172033 !important;
+  font-family: inherit;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background .14s ease, border-color .14s ease, color .14s ease, transform .14s ease;
+}
+
+.workspace-v3 .viewer-ai-open-button span,
+.workspace-v3 .viewer-ai-open-button svg {
+  color: #172033 !important;
+}
+
+.workspace-v3 .viewer-ai-open-button:hover {
+  border-color: #cbd4e0;
+  background: #f8fafc;
+  color: #172033 !important;
+}
+
+.workspace-v3 .viewer-ai-open-button:active {
+  transform: translateY(1px);
+}
+
+.workspace-v3 .viewer-ai-open-button:focus-visible {
+  outline: 2px solid rgba(47, 91, 234, .34);
+  outline-offset: 2px;
+}
+
+/* Keep viewer actions aligned as a single compact control row. */
+.workspace-v3 .viewer-toolbar {
+  gap: 8px;
+}
+
+.workspace-v3 .viewer-status > strong,
+.workspace-v3 .viewer-ai-open-button,
+.viewer-print-button {
+  align-self: center;
+}
+
+/* Subtle divider between document manipulation and utility actions. */
+.workspace-v3 .viewer-status {
+  padding-left: 2px;
+}
+
+
+/* Stored full-document translation controls */
+.workspace-v3 .full-translate-controls {
+  padding-right: 7px;
+  margin-right: 1px;
+  border-right: 1px solid #e3e8ef;
+}
+
+.workspace-v3 .full-translate-controls .translate-toggle.active {
+  border-color: #b9c8ff;
+  background: #eef3ff;
+  color: #2446c7;
+}
+
+.workspace-v3 .full-translate-controls select {
+  display: block;
+}
+
+/* Keep zoom anchored to the viewport center; frames may exceed viewport width. */
+.workspace-v3 .chapter-page-frame {
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* Translation tool window can be resized and then dragged using its header. */
+.workspace-v3 .translation-panel {
+  min-width: 320px;
+  min-height: 240px;
+  max-width: calc(100vw - 16px);
+  max-height: calc(100vh - 16px);
+  resize: both;
+  overflow: auto;
+}
+
+.workspace-v3 .translation-panel header {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  background: rgba(255,255,255,.985);
+}
+
+.workspace-v3 .translation-source,
+.workspace-v3 .translation-result {
+  overflow: auto;
+}
+
+.workspace-v3 .translation-result {
+  min-height: 90px;
+}
+
+.workspace-v3 .translation-panel::after {
+  content: "";
+  position: absolute;
+  right: 4px;
+  bottom: 4px;
+  width: 8px;
+  height: 8px;
+  border-right: 1px solid #aeb7c4;
+  border-bottom: 1px solid #aeb7c4;
+  pointer-events: none;
+}
+
+/* Detailed Agentic trace */
+.workspace-v3 .agent-step-list li.running > div strong {
+  color: #2446c7;
+}
+
+.workspace-v3 .agent-step-list li em {
+  display: block;
+  margin-top: 5px;
+  padding: 5px 7px;
+  border-radius: 6px;
+  background: #f3f5f8;
+  color: #687386;
+  font-size: 9px;
+  font-style: normal;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+
+.workspace-v3 .agent-step-list li.running em {
+  background: #eef3ff;
+  color: #3d59b8;
+}
+
+.workspace-v3 .process-overview small {
+  font-variant-numeric: tabular-nums;
+}
+
+@media (max-width: 1440px) {
+  .workspace-v3 .viewer-toolbar {
+    gap: 6px;
+  }
+
+  .workspace-v3 .translate-controls select {
+    max-width: 92px;
+  }
+
+  .workspace-v3 .translate-toggle {
+    padding-inline: 7px;
+  }
+}
+
+
+/* Final readability, heading hierarchy, hover, and zoom polish. */
+/* The final pass deliberately favors readability over maximum information density. */
+.workspace-v3 .product-topbar {
+  height: 62px;
+  min-height: 62px;
+  padding-inline: 20px;
+}
+
+.workspace-v3 .workspace-grid {
+  height: calc(100vh - 62px);
+}
+
+.workspace-v3 .brand-mark {
+  width: 32px;
+  height: 32px;
+  font-size: 14px !important;
+}
+
+.workspace-v3 .brand-copy strong { font-size: 18px; }
+.workspace-v3 .brand-copy small { font-size: 14px; }
+
+.workspace-v3 .chapter-pill,
+.workspace-v3 .status-pill,
+.workspace-v3 .topbar-ghost,
+.topbar-index-button {
+  min-height: 38px;
+  height: 38px;
+  padding-inline: 12px;
+  font-size: 15px !important;
+}
+
+.workspace-v3 .chapter-pill > span { font-size: 13px; }
+.topbar-index-button > span { font-size: 15px !important; }
+.topbar-index-button > small { font-size: 14px !important; }
+
+.scope-search-control {
+  width: 270px;
+  height: 38px;
+  padding-inline: 11px;
+}
+
+.scope-search-control input { font-size: 14px; }
+.scope-search-results strong { font-size: 14px; }
+.scope-search-results small,
+.scope-search-results em,
+.scope-search-empty { font-size: 13px; }
+
+/* Panel headings and left-side navigation. */
+.workspace-v3 .panel-heading {
+  min-height: 82px;
+  padding: 16px 17px 14px;
+}
+
+.workspace-v3 .panel-eyebrow { font-size: 13px; }
+.workspace-v3 .panel-heading h2 { font-size: 18px; }
+.workspace-v3 .panel-heading p { font-size: 14px; }
+
+.workspace-v3 .icon-button {
+  width: 34px;
+  height: 34px;
+}
+
+.workspace-v3 .document-picker {
+  padding: 12px 11px 10px;
+}
+
+.workspace-v3 .document-search {
+  min-height: 42px;
+  padding-inline: 12px;
+  font-size: 15px;
+}
+
+.workspace-v3 .scope-toolbar {
+  padding: 10px 11px;
+}
+
+.workspace-v3 .scope-toolbar strong { font-size: 14px; }
+.workspace-v3 .scope-toolbar span,
+.workspace-v3 .scope-toolbar button { font-size: 13px; }
+
+.workspace-v3 .scope-toolbar button {
+  min-height: 30px;
+  padding-inline: 8px;
+}
+
+.workspace-v3 .document-list-row { min-height: 60px; }
+.workspace-v3 .document-item {
+  min-height: 58px;
+  padding-block: 10px;
+}
+
+.workspace-v3 .document-item strong { font-size: 15px; }
+.workspace-v3 .document-item small { font-size: 13px; }
+.workspace-v3 .document-index-badge {
+  min-height: 22px;
+  padding-inline: 8px;
+  font-size: 11px;
+}
+
+.workspace-v3 .checkbox-mark {
+  width: 20px;
+  height: 20px;
+  font-size: 13px;
+}
+
+.workspace-v3 .section-label { font-size: 13px; }
+.workspace-v3 .toc-tree .toc-toggle {
+  width: 24px;
+  height: 34px;
+  font-size: 14px;
+}
+.workspace-v3 .toc-toggle-spacer {
+  width: 24px;
+  height: 34px;
+}
+.workspace-v3 .toc-tree .toc-link {
+  min-height: 34px;
+  padding: 7px 8px;
+  font-size: 14px;
+  line-height: 1.35;
+}
+.workspace-v3 .toc-tree small,
+.workspace-v3 .toc-num { font-size: 13px; }
+
+/* Viewer toolbar may wrap on narrower workstations rather than overflow. */
+.workspace-v3 .sticky-viewer-heading {
+  min-height: 86px;
+  height: auto;
+  padding: 13px 16px;
+}
+
+.workspace-v3 .viewer-heading {
+  flex-wrap: wrap;
+  align-items: center;
+  row-gap: 8px;
+}
+
+.workspace-v3 .viewer-heading-main {
+  flex: 1 1 190px;
+}
+
+.workspace-v3 .viewer-heading h2 { font-size: 18px; }
+.workspace-v3 .viewer-heading p { font-size: 14px; }
+
+.workspace-v3 .viewer-toolbar {
+  flex: 1 1 auto;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  row-gap: 7px;
+  max-width: 100%;
+}
+
+.workspace-v3 .viewer-menu-button {
+  width: 38px;
+  height: 38px;
+}
+
+.workspace-v3 .translate-toggle,
+.workspace-v3 .zoom-controls button,
+.workspace-v3 .translate-controls select {
+  height: 38px;
+  font-size: 14px;
+}
+
+.workspace-v3 .translate-toggle {
+  padding-inline: 10px;
+}
+
+.workspace-v3 .translate-controls select {
+  max-width: 116px;
+}
+
+.workspace-v3 .zoom-controls span {
+  min-width: 50px;
+  font-size: 13px;
+}
+
+.workspace-v3 .zoom-controls button {
+  width: 34px;
+}
+
+.workspace-v3 .viewer-status strong {
+  min-width: 50px;
+  min-height: 36px;
+  font-size: 14px;
+}
+
+.workspace-v3 .viewer-ai-open-button,
+.viewer-print-button {
+  min-height: 38px;
+  height: 38px;
+  padding-inline: 12px;
+  font-size: 14px;
+}
+
+.workspace-v3 .chapter-page-toolbar {
+  min-height: 27px;
+  font-size: 13px;
+}
+
+/* True document-title hierarchy: level 1/2/3 visually match h2/h3/h4. */
+.workspace-v3 .chapter-page-frame {
+  --viewer-zoom-scale: 1;
+}
+
+.workspace-v3 .coordinate-block .coordinate-text,
+.workspace-v3 .coordinate-block .coordinate-table {
+  font-size: 1em;
+  line-height: 1.32;
+}
+
+.workspace-v3 .coordinate-block .semantic-heading {
+  line-height: 1.18;
+  letter-spacing: -.012em;
+}
+
+.workspace-v3 .coordinate-block .semantic-heading-1 {
+  font-size: 1.5em;
+  font-weight: 780;
+}
+
+.workspace-v3 .coordinate-block .semantic-heading-2 {
+  font-size: 1.333em;
+  font-weight: 740;
+}
+
+.workspace-v3 .coordinate-block .semantic-heading-3 {
+  font-size: 1.167em;
+  font-weight: 700;
+}
+
+.workspace-v3 .coordinate-block .semantic-heading-4 {
+  font-size: 1.083em;
+  font-weight: 680;
+}
+
+.workspace-v3 .coordinate-block .semantic-heading-5,
+.workspace-v3 .coordinate-block .semantic-heading-6 {
+  font-size: 1em;
+  font-weight: 660;
+}
+
+/* Partial translation OFF means ordinary text has no hover box at all. */
+.workspace-v3 .translation-inactive .coordinate-block:not(.focused):hover {
+  z-index: auto;
+  background: transparent;
+  box-shadow: none;
+}
+
+.workspace-v3 .translation-inactive .coordinate-block:not(.focused):not(.type-title):not(.type-sub_title):hover {
+  overflow: hidden;
+}
+
+.workspace-v3 .translation-inactive .coordinate-block.type-title:not(.focused):hover,
+.workspace-v3 .translation-inactive .coordinate-block.type-sub_title:not(.focused):hover {
+  overflow: visible;
+}
+
+.workspace-v3 .translation-inactive .coordinate-block:not(.focused):not(.type-table):hover {
+  border-color: transparent;
+}
+
+.workspace-v3 .translation-inactive .coordinate-block.type-table:not(.focused):hover {
+  border-color: rgb(23 32 51 / 10%);
+}
+
+/* Assistant and supporting UI are raised by roughly 2–3pt from the previous pass. */
+.workspace-v3 .assistant-titlebar {
+  min-height: 64px;
+  padding: 12px 14px 10px;
+}
+.workspace-v3 .assistant-titlebar strong { font-size: 16px; }
+.workspace-v3 .assistant-scope-meta { font-size: 13px; }
+
+.workspace-v3 .assistant-header {
+  min-height: 52px;
+  padding: 8px 11px;
+}
+
+.workspace-v3 .assistant-tabs button {
+  min-height: 35px;
+  font-size: 14px;
+}
+
+.workspace-v3 .segmented button {
+  min-height: 32px;
+  padding: 7px 11px;
+  font-size: 13px;
+}
+
+.workspace-v3 .assistant-settings > summary {
+  min-height: 35px;
+  padding-inline: 10px;
+  font-size: 13px;
+}
+.workspace-v3 .assistant-settings > label {
+  min-width: 175px;
+  font-size: 13px;
+}
+.workspace-v3 .assistant-settings select {
+  min-height: 35px;
+  font-size: 13px;
+}
+
+.workspace-v3 .source-dock-heading {
+  min-height: 62px;
+  padding: 10px 12px;
+}
+.workspace-v3 .source-dock-heading strong { font-size: 15px; }
+.workspace-v3 .source-dock-heading small,
+.workspace-v3 .source-strip small { font-size: 13px; }
+.workspace-v3 .source-count {
+  min-width: 25px;
+  height: 25px;
+  font-size: 13px;
+}
+.workspace-v3 .source-strip button {
+  min-height: 66px;
+  padding: 9px 10px;
+}
+.workspace-v3 .source-strip button strong { font-size: 14px; }
+
+.workspace-v3 .user-message,
+.workspace-v3 .assistant-message {
+  font-size: 15px;
+}
+
+.workspace-v3 .user-message {
+  padding: 11px 13px;
+}
+
+.workspace-v3 .assistant-message {
+  padding: 13px 15px;
+}
+
+.workspace-v3 .empty-chat strong { font-size: 15px; }
+.workspace-v3 .empty-chat p { font-size: 14px; }
+
+.workspace-v3 .question-form {
+  padding: 13px;
+}
+
+.workspace-v3 .question-form textarea {
+  min-height: 96px;
+  padding: 13px;
+  font-size: 15px;
+}
+
+.workspace-v3 .question-form span { font-size: 13px; }
+
+.workspace-v3 .icon-only-send {
+  width: 48px;
+  min-width: 48px;
+  height: 46px;
+  min-height: 46px;
+}
+
+.workspace-v3 .process-overview strong { font-size: 15px; }
+.workspace-v3 .process-overview small { font-size: 13px; }
+.workspace-v3 .agent-step-list li > span {
+  width: 33px;
+  height: 33px;
+  font-size: 13px;
+}
+.workspace-v3 .agent-step-list strong { font-size: 14px; }
+.workspace-v3 .agent-step-list small,
+.workspace-v3 .agent-step-list li em { font-size: 13px; }
+.workspace-v3 .process-query span { font-size: 13px; }
+.workspace-v3 .process-query strong { font-size: 14px; }
+
+.workspace-v3 .translation-panel header strong { font-size: 15px; }
+.workspace-v3 .translation-panel header small { font-size: 13px; }
+.workspace-v3 .translation-source > span,
+.workspace-v3 .translation-result > span { font-size: 13px; }
+.workspace-v3 .translation-panel p { font-size: 15px; }
+.workspace-v3 .translation-panel footer { font-size: 13px; }
+
+/* Keep enlarged controls usable on common 1366–1440 px workstations. */
+@media (max-width: 1440px) {
+  .workspace-v3 .viewer-toolbar {
+    gap: 6px;
+  }
+
+  .workspace-v3 .translate-controls select {
+    max-width: 100px;
+  }
+
+  .scope-search-control {
+    width: 220px;
+  }
+}
+
+@media (max-width: 1280px) {
+  .workspace-v3 .viewer-heading-main {
+    flex-basis: 100%;
+  }
+
+  .workspace-v3 .viewer-toolbar {
+    justify-content: flex-start;
+  }
+
+  .workspace-v3 .sticky-viewer-heading {
+    align-content: flex-start;
+  }
+}
+
+
+/* Translation selector and viewer utility alignment pass. */
+.workspace-v3 .translate-toggle:disabled,
+.workspace-v3 .translate-controls select:disabled {
+  cursor: default;
+  opacity: .52;
+}
+
+.workspace-v3 .partial-translate-controls {
+  flex-wrap: wrap;
+}
+
+.workspace-v3 .custom-translation-input {
+  width: 142px;
+  height: 38px;
+  padding: 0 10px;
+  border: 1px solid var(--fp-line);
+  border-radius: 8px;
+  outline: 0;
+  background: #fff;
+  color: #263246;
+  font: inherit;
+  font-size: 14px;
+}
+
+.workspace-v3 .custom-translation-input::placeholder {
+  color: #98a2b3;
+}
+
+.workspace-v3 .custom-translation-input:focus {
+  border-color: #b8c6ff;
+  box-shadow: 0 0 0 3px rgba(49,94,251,.07);
+}
+
+/* Portal insertion order is not the visual order: print stays before AI reopen. */
+.workspace-v3 .viewer-status > strong {
+  order: 0;
+}
+
+.viewer-print-button {
+  order: 1;
+  min-height: 38px;
+  height: 38px;
+  font-size: 14px !important;
+  font-weight: 600;
+}
+
+.viewer-print-button > span {
+  font-size: 14px !important;
+}
+
+.workspace-v3 .viewer-ai-open-button {
+  order: 2;
+  min-height: 38px;
+  height: 38px;
+  font-size: 14px !important;
+  font-weight: 600;
+}
+
+.workspace-v3 .viewer-ai-open-button > span {
+  font-size: 14px !important;
+}
+
+/* Match the vector DB action to the viewer's translation controls. */
+.topbar .topbar-index-button {
+  font-size: 14px !important;
+  font-weight: 600 !important;
+}
+
+.topbar .topbar-index-button > span {
+  font-size: 14px !important;
+  font-weight: 600 !important;
+}
+
+.topbar .topbar-index-button > small {
+  font-size: 12px !important;
+}
+
+@media (max-width: 1440px) {
+  .workspace-v3 .custom-translation-input {
+    width: 128px;
+  }
+}

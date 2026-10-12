@@ -48,6 +48,12 @@ async def test_toc_tree(service: ViewerService) -> None:
 
 
 @pytest.mark.asyncio
+async def test_translation_languages_are_union_of_nonempty_document_keys(service: ViewerService) -> None:
+    languages = await service.list_translation_languages(1)
+    assert languages == ["en", "fil", "pl"]
+
+
+@pytest.mark.asyncio
 async def test_get_content_includes_navigation_number(service: ViewerService) -> None:
     content = await service.get_content(1, 13)
     assert content.title_num == "1-0-2"

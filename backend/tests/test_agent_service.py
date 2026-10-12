@@ -99,4 +99,12 @@ async def test_agent_stream_emits_plan_sources_tokens_and_done():
 
     events = [event async for event in service.stream_answer("질문", [21], top_k=3)]
 
-    assert [event for event, _ in events] == ["plan", "sources", "token", "token", "done"]
+    event_names = [event for event, _ in events]
+    assert event_names[0] == "step"
+    assert "plan" in event_names
+    assert "sources" in event_names
+    assert event_names.count("token") == 2
+    assert event_names[-1] == "done"
+    steps = [data for event, data in events if event == "step"]
+    assert any(step["id"] == "evaluate" and step["status"] == "done" for step in steps)
+    assert any(step["id"] == "answer" and step["status"] == "done" for step in steps)

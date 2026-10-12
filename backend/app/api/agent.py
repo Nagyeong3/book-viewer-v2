@@ -4,12 +4,13 @@ import json
 from collections.abc import AsyncIterator
 from dataclasses import asdict
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field, field_validator
 
 from app.application.agent_service import AgentService
-from app.core.container import get_agent_service
+from app.application.index_management_service import IndexManagementService
+from app.core.container import get_agent_service, get_index_management_service
 
 router = APIRouter(prefix="/api/agent", tags=["agent"])
 
@@ -56,11 +57,28 @@ def _sse(event: str, data: object) -> str:
     return f"event: {event}\ndata: {json.dumps(data, ensure_ascii=False)}\n\n"
 
 
+async def _require_indexed_documents(
+    document_ids: list[int], service: IndexManagementService
+) -> None:
+    missing = await service.missing_document_ids(document_ids)
+    if missing:
+        raise HTTPException(
+            status_code=409,
+            detail={
+                "code": "DOCUMENTS_NOT_INDEXED",
+                "message": "선택한 문서 중 벡터 DB가 구축되지 않은 문서가 있습니다.",
+                "document_ids": missing,
+            },
+        )
+
+
 @router.post("/query", response_model=AgentQueryResponse)
 async def query_agent(
     payload: AgentQueryRequest,
     service: AgentService = Depends(get_agent_service),
+    index_management: IndexManagementService = Depends(get_index_management_service),
 ):
+    await _require_indexed_documents(payload.document_ids, index_management)
     result = await service.answer(
         payload.question,
         payload.document_ids,
@@ -90,7 +108,10 @@ async def query_agent(
 async def stream_agent(
     payload: AgentQueryRequest,
     service: AgentService = Depends(get_agent_service),
+    index_management: IndexManagementService = Depends(get_index_management_service),
 ) -> StreamingResponse:
+    await _require_indexed_documents(payload.document_ids, index_management)
+
     async def events() -> AsyncIterator[str]:
         async for event, data in service.stream_answer(
             payload.question,

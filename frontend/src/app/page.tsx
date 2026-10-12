@@ -1,8 +1,13 @@
+import IndexManagementPanel from "../components/IndexManagementPanel";
+import ProductToolbar from "../components/ProductToolbar";
+import WorkspaceV3 from "../components/WorkspaceV3";
+
 export default function HomePage() {
   return (
-    <main>
-      <h1>Book Viewer V2</h1>
-      <p>Phase 0 bootstrap is ready.</p>
-    </main>
+    <>
+      <WorkspaceV3 />
+      <ProductToolbar />
+      <IndexManagementPanel />
+    </>
   );
 }
