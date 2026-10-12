@@ -29,7 +29,9 @@ function RoleSwitcher({ role, onChange }: { role: UserRole; onChange: (role: Use
 }
 
 export default function RoleAwareShell() {
-  const [role, setRole] = useState<UserRole>("user");
+  // Keep the existing product surface as the default for regression tests/demo.
+  // A real authenticated session can replace this mock role source later.
+  const [role, setRole] = useState<UserRole>("admin");
   const [portalTarget, setPortalTarget] = useState<HTMLElement | null>(null);
   const [permissionNotice, setPermissionNotice] = useState("");
 
