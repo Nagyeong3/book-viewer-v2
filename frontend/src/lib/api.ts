@@ -1,3 +1,5 @@
+import { getAuthorizationHeader } from "./auth";
+
 export type DocumentSummary = { id: number; title: string };
 
 export type TocNode = {
@@ -33,6 +35,14 @@ export type DocumentIndexStatus = {
   state: "ready" | "missing" | "queued" | "indexing" | "failed";
   indexed_chunks: number;
   message: string | null;
+};
+
+export type CurrentUserResponse = {
+  id: string;
+  username: string;
+  name: string;
+  role: "user" | "admin";
+  groups: string[];
 };
 
 export type RagSource = {
@@ -75,9 +85,10 @@ export type StreamHandlers = {
 export const API_BASE = (process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://127.0.0.1:9056").replace(/\/$/, "");
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
+  const auth = await getAuthorizationHeader();
   const response = await fetch(`${API_BASE}${path}`, {
     ...init,
-    headers: { "Content-Type": "application/json", ...(init?.headers ?? {}) },
+    headers: { "Content-Type": "application/json", ...auth, ...(init?.headers ?? {}) },
   });
   if (!response.ok) {
     const body = await response.text();
@@ -87,6 +98,7 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
 }
 
 export const api = {
+  getCurrentUser: () => request<CurrentUserResponse>("/api/auth/me"),
   listDocuments: () => request<DocumentSummary[]>("/api/documents"),
   getToc: (documentId: number) => request<TocNode[]>(`/api/documents/${documentId}/toc`),
   listTranslationLanguages: (documentId: number) =>
@@ -175,9 +187,10 @@ export async function streamAgent(
   handlers: StreamHandlers,
   signal?: AbortSignal,
 ): Promise<void> {
+  const auth = await getAuthorizationHeader();
   const response = await fetch(`${API_BASE}/api/agent/stream`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: { "Content-Type": "application/json", ...auth },
     body: JSON.stringify({ question, document_ids: documentIds, top_k: topK }),
     signal,
   });
@@ -191,9 +204,10 @@ export async function streamRag(
   handlers: StreamHandlers,
   signal?: AbortSignal,
 ): Promise<void> {
+  const auth = await getAuthorizationHeader();
   const response = await fetch(`${API_BASE}/api/rag/stream`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: { "Content-Type": "application/json", ...auth },
     body: JSON.stringify({ question, document_ids: documentIds, mode: "hybrid", top_k: topK }),
     signal,
   });
