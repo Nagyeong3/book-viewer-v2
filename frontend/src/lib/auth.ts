@@ -203,7 +203,7 @@ export async function beginLogin(returnTo = "/") {
     client_id: KEYCLOAK_CLIENT_ID,
     redirect_uri: redirectUri,
     response_type: "code",
-    scope: "openid profile email",
+    scope: "openid",
     state,
     code_challenge: challenge,
     code_challenge_method: "S256",
