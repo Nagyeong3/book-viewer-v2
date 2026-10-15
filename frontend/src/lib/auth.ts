@@ -162,8 +162,14 @@ async function refresh(tokens: TokenSet): Promise<TokenSet | null> {
     body,
   });
   if (!response.ok) return null;
-  const next = await response.json() as TokenSet;
-  if (!next.access_token) return null;
+  const returned = await response.json() as TokenSet;
+  if (!returned.access_token) return null;
+  const next: TokenSet = {
+    ...tokens,
+    ...returned,
+    refresh_token: returned.refresh_token || tokens.refresh_token,
+    id_token: returned.id_token || tokens.id_token,
+  };
   saveTokenSet(next);
   return next;
 }
