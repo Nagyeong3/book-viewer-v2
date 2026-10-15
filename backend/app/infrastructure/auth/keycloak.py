@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import base64
+import json
 from dataclasses import dataclass
 from typing import Literal
 
@@ -24,6 +26,26 @@ class AuthenticatedUser:
     name: str
     role: UserRole
     groups: tuple[str, ...]
+
+
+def _token_client_ids(access_token: str) -> set[str]:
+    try:
+        payload_part = access_token.split(".")[1]
+        padded = payload_part + "=" * (-len(payload_part) % 4)
+        payload = json.loads(base64.urlsafe_b64decode(padded.encode("ascii")).decode("utf-8"))
+    except (IndexError, ValueError, UnicodeDecodeError, json.JSONDecodeError) as exc:
+        raise AuthenticationError("Access token has an invalid JWT payload") from exc
+
+    client_ids: set[str] = set()
+    azp = payload.get("azp")
+    if isinstance(azp, str):
+        client_ids.add(azp)
+    audience = payload.get("aud")
+    if isinstance(audience, str):
+        client_ids.add(audience)
+    elif isinstance(audience, list):
+        client_ids.update(item for item in audience if isinstance(item, str))
+    return client_ids
 
 
 class KeycloakAuthProvider:
@@ -60,6 +82,9 @@ class KeycloakAuthProvider:
 
         if response.status_code != 200:
             raise AuthenticationError("Access token is invalid or expired")
+
+        if self._client_id not in _token_client_ids(access_token):
+            raise AuthenticationError("Access token was not issued for the Book Viewer client")
 
         try:
             payload = response.json()
