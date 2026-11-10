@@ -87,13 +87,13 @@ export default function RoleAwareShell() {
     if (!keycloakMode) return;
     let cancelled = false;
     const resolveSession = async () => {
-      const token = await getValidAccessToken();
-      if (!token) {
-        const returnTo = encodeURIComponent(`${window.location.pathname}${window.location.search}`);
-        window.location.replace(`/login?returnTo=${returnTo}`);
-        return;
-      }
       try {
+        const token = await getValidAccessToken();
+        if (!token) {
+          const returnTo = encodeURIComponent(`${window.location.pathname}${window.location.search}`);
+          window.location.replace(`/login?returnTo=${returnTo}`);
+          return;
+        }
         const user = await api.getCurrentUser();
         if (cancelled) return;
         setSession({ id: user.id, username: user.username, name: user.name, role: user.role, groups: user.groups });
@@ -105,10 +105,11 @@ export default function RoleAwareShell() {
           setAuthState("denied");
           setAuthMessage("이 계정은 Book Viewer 사용 그룹에 등록되어 있지 않습니다.");
         } else if (message.includes("HTTP 401")) {
-          window.location.replace("/login");
+          setAuthState("error");
+          setAuthMessage("로그인 세션이 만료되었거나 인증에 실패했습니다. 다시 로그인해 주세요.");
         } else {
           setAuthState("error");
-          setAuthMessage(message);
+          setAuthMessage("인증 서버에 연결할 수 없습니다. 서버 및 네트워크 상태를 확인하고 다시 시도해 주세요.");
         }
       }
     };
@@ -153,7 +154,12 @@ export default function RoleAwareShell() {
       <AuthState
         title="인증 정보를 확인할 수 없습니다"
         description={authMessage || "잠시 후 다시 시도하세요."}
-        action={<button className="auth-primary-button" type="button" onClick={() => window.location.reload()}>다시 시도</button>}
+        action={
+          <div className="auth-state-actions">
+            <button className="auth-primary-button" type="button" onClick={() => void logout()}>다른 계정으로 로그인</button>
+            <button type="button" onClick={() => window.location.reload()}>다시 시도</button>
+          </div>
+        }
       />
     );
   }
