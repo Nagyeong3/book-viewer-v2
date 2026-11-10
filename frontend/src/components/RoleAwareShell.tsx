@@ -3,7 +3,7 @@
 import { createPortal } from "react-dom";
 import { useEffect, useMemo, useState } from "react";
 
-import { getValidAccessToken, isKeycloakMode, logout } from "../lib/auth";
+import { getValidAccessToken, isKeycloakMode, logout, switchAccount } from "../lib/auth";
 import { api } from "../lib/api";
 import { hasPermission, sessionForRole, SessionUser, UserRole } from "../lib/session";
 import IndexManagementPanel from "./IndexManagementPanel";
@@ -144,7 +144,7 @@ export default function RoleAwareShell() {
       <AuthState
         title="접근 권한이 없습니다"
         description={authMessage}
-        action={<button className="auth-primary-button" type="button" onClick={() => void logout()}>다른 계정으로 로그인</button>}
+        action={<button className="auth-primary-button" type="button" onClick={() => void switchAccount()}>다른 계정으로 로그인</button>}
       />
     );
   }
