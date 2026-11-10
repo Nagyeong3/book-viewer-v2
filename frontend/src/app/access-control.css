@@ -366,3 +366,27 @@
     min-height: 100vh;
   }
 }
+
+.auth-state-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin-top: 26px;
+}
+
+.auth-state-card .auth-state-actions .auth-primary-button {
+  margin-top: 0;
+}
+
+.auth-state-actions > button:not(.auth-primary-button) {
+  min-height: 44px;
+  padding: 0 18px;
+  border: 1px solid #d3dce7;
+  border-radius: 9px;
+  background: #fff;
+  color: #41516b;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
