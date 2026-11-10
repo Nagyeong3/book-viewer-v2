@@ -10,7 +10,7 @@ Clean-room rebuild of the Booklet RAG viewer and chatbot.
 
 ```cmd
 call C:\ProgramData\miniconda3\Scripts\activate.bat
-conda activate bookviewer-v2-py312
+conda activate D:\project\book-viewer-v2\bookviewer-v2-py312
 cd /d D:\project\book-viewer-v2\backend
 python -m uvicorn app.main:app --host 0.0.0.0 --port 9056
 ```
@@ -22,7 +22,7 @@ where python
 python --version
 ```
 
-`conda activate bookviewer-v2-py312`에서 환경을 찾지 못하는 경우에는 `conda env list`로 등록된 환경 이름/경로를 확인한다.
+Conda 환경 이름이 등록되지 않아 `EnvironmentNameNotFound`가 발생할 수 있다. 폐쇄망 개발 PC에서는 위와 같이 환경 폴더의 절대경로를 지정해 활성화한다. 실제 경로가 다르면 `conda env list`와 폴더 구조를 확인한다.
 
 ```cmd
 conda env list
@@ -34,3 +34,9 @@ conda env list
 cd /d D:\runtime\book-viewer-v2-backend
 D:\runtime\bookviewer-v2-py312\python.exe -m uvicorn app.main:app --host 0.0.0.0 --port 9056
 ```
+
+## Keycloak 로그인 / 계정 전환
+
+개발 프론트(`http://166.103.117.58:3000`)와 운영 프론트(`http://166.103.117.128:3002`)는 Keycloak 클라이언트 `book-viewer-v2`를 공유한다. 각 프론트의 정확한 `/auth/callback`을 Keycloak Valid redirect URIs에, 두 Origin을 Web origins에 등록한다. 백엔드 `CORS_ALLOWED_ORIGINS`에도 프론트 Origin을 허용하고 백엔드를 재시작한다.
+
+인증/권한 오류의 **다른 계정으로 로그인** 기능은 로컬 인증정보를 정리하고 Keycloak에 `prompt=login`으로 새 로그인을 요청한다. 화면에 `Failed to fetch` 등 내부 예외 문자열을 그대로 노출하지 않는다.

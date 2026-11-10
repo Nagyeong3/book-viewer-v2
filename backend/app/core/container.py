@@ -9,6 +9,7 @@ from app.application.rag_service import RagService
 from app.application.retrieval_service import RetrievalService
 from app.application.viewer_service import ViewerService
 from app.core.config import Settings
+from app.infrastructure.auth.keycloak import KeycloakAuthProvider
 from app.infrastructure.elasticsearch.client import ElasticsearchClient
 from app.infrastructure.elasticsearch.retrieval_repository import ElasticsearchRetrievalRepository
 from app.infrastructure.embedding.vllm import VLLMEmbeddingProvider
@@ -20,6 +21,7 @@ from app.infrastructure.postgres.pool import PostgresPool
 @dataclass(slots=True)
 class AppContainer:
     settings: Settings
+    auth_provider: KeycloakAuthProvider | None = None
     postgres_pool: PostgresPool | None = None
     viewer_service: ViewerService | None = None
     elasticsearch_client: ElasticsearchClient | None = None
@@ -33,6 +35,27 @@ class AppContainer:
     @classmethod
     async def start(cls, settings: Settings) -> "AppContainer":
         container = cls(settings=settings)
+
+        if settings.auth_mode == "keycloak":
+            required = {
+                "KEYCLOAK_BASE_URL": settings.keycloak_base_url,
+                "KEYCLOAK_REALM": settings.keycloak_realm,
+                "KEYCLOAK_CLIENT_ID": settings.keycloak_client_id,
+                "KEYCLOAK_USER_GROUP": settings.keycloak_user_group,
+                "KEYCLOAK_ADMIN_GROUP": settings.keycloak_admin_group,
+            }
+            missing = [name for name, value in required.items() if not value]
+            if missing:
+                raise RuntimeError(f"Keycloak authentication is missing settings: {', '.join(missing)}")
+            container.auth_provider = KeycloakAuthProvider(
+                settings.keycloak_base_url or "",
+                realm=settings.keycloak_realm or "",
+                client_id=settings.keycloak_client_id or "",
+                user_group=settings.keycloak_user_group or "",
+                admin_group=settings.keycloak_admin_group or "",
+                timeout=settings.keycloak_timeout,
+            )
+
         if settings.app_profile == "mock":
             return container
 
@@ -126,6 +149,8 @@ class AppContainer:
             await self.elasticsearch_client.close()
         if self.postgres_pool is not None:
             await self.postgres_pool.close()
+        if self.auth_provider is not None:
+            await self.auth_provider.close()
 
 
 def get_container(request: Request) -> AppContainer:

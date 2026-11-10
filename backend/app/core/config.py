@@ -20,6 +20,14 @@ class Settings(BaseSettings):
     enable_api_docs: bool = False
     cors_allowed_origins: str = "http://127.0.0.1:3000,http://localhost:3000"
 
+    auth_mode: Literal["disabled", "keycloak"] = "disabled"
+    keycloak_base_url: str | None = None
+    keycloak_realm: str | None = None
+    keycloak_client_id: str | None = None
+    keycloak_user_group: str | None = None
+    keycloak_admin_group: str | None = None
+    keycloak_timeout: float = Field(default=10.0, gt=0, le=60)
+
     database_url: str | None = None
     database_min_pool_size: int = Field(default=1, ge=1, le=50)
     database_max_pool_size: int = Field(default=10, ge=1, le=100)
@@ -74,6 +82,11 @@ class Settings(BaseSettings):
         return normalized
 
     @field_validator(
+        "keycloak_base_url",
+        "keycloak_realm",
+        "keycloak_client_id",
+        "keycloak_user_group",
+        "keycloak_admin_group",
         "database_url",
         "elasticsearch_url",
         "elasticsearch_username",

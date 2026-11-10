@@ -2,10 +2,11 @@ import logging
 from collections.abc import AsyncIterator, Awaitable, Callable
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI
+from fastapi import Depends, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.agent import router as agent_router
+from app.api.auth import require_admin, require_user, router as auth_router
 from app.api.errors import register_exception_handlers
 from app.api.health import router as health_router
 from app.api.index_management import router as index_management_router
@@ -44,7 +45,7 @@ def create_app(
 
     app = FastAPI(
         title=resolved_settings.app_name,
-        version="0.10.0",
+        version="0.11.0",
         lifespan=lifespan,
         docs_url="/docs" if resolved_settings.enable_api_docs else None,
         redoc_url=None,
@@ -54,21 +55,24 @@ def create_app(
         allow_origins=resolved_settings.cors_origins,
         allow_credentials=False,
         allow_methods=["GET", "POST", "OPTIONS"],
-        allow_headers=["Content-Type", "X-Request-ID"],
+        allow_headers=["Authorization", "Content-Type", "X-Request-ID"],
     )
     register_request_middleware(app)
     register_exception_handlers(app)
     app.include_router(health_router)
     app.include_router(readiness_router)
+    app.include_router(auth_router)
     if resolved_settings.app_profile == "mock":
         app.include_router(mock_router)
     else:
-        app.include_router(viewer_router)
-        app.include_router(search_router)
-        app.include_router(index_management_router)
-        app.include_router(rag_router)
-        app.include_router(agent_router)
-        app.include_router(translation_router)
+        user_dependencies = [Depends(require_user)]
+        admin_dependencies = [Depends(require_admin)]
+        app.include_router(viewer_router, dependencies=user_dependencies)
+        app.include_router(search_router, dependencies=user_dependencies)
+        app.include_router(rag_router, dependencies=user_dependencies)
+        app.include_router(agent_router, dependencies=user_dependencies)
+        app.include_router(translation_router, dependencies=user_dependencies)
+        app.include_router(index_management_router, dependencies=admin_dependencies)
     return app
 
 
