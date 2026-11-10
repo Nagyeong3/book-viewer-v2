@@ -190,7 +190,7 @@ export function isKeycloakMode(): boolean {
   return AUTH_MODE === "keycloak";
 }
 
-export async function beginLogin(returnTo = "/") {
+export async function beginLogin(returnTo = "/", forceLogin = false) {
   assertKeycloakConfig();
   const redirectUri = `${window.location.origin}/auth/callback`;
   const verifier = randomString(48);
@@ -208,7 +208,13 @@ export async function beginLogin(returnTo = "/") {
     code_challenge: challenge,
     code_challenge_method: "S256",
   });
+  if (forceLogin) params.set("prompt", "login");
   window.location.assign(`${KEYCLOAK_BASE_URL}/realms/${encodeURIComponent(KEYCLOAK_REALM)}/protocol/openid-connect/auth?${params.toString()}`);
+}
+
+export async function switchAccount(): Promise<void> {
+  clearAuthSession();
+  await beginLogin("/", true);
 }
 
 export async function completeLogin(search: string): Promise<string> {
