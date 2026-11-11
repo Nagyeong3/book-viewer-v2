@@ -93,7 +93,13 @@ async def get_document(
 
 
 @router.get("/{document_id}/toc", response_model=list[TocNodeResponse])
-async def get_toc(document_id: int, service: ViewerService = Depends(get_viewer_service)):
+async def get_toc(
+    document_id: int,
+    service: ViewerService = Depends(get_viewer_service),
+    access: DocumentAccessService = Depends(get_document_access_service),
+    user: AuthenticatedUser = Depends(require_user),
+):
+    await access.require_documents(user, [document_id])
     return await service.get_toc(document_id)
 
 
@@ -113,7 +119,10 @@ async def list_contents(
     document_id: int,
     page: int | None = Query(default=None, ge=1),
     service: ViewerService = Depends(get_viewer_service),
+    access: DocumentAccessService = Depends(get_document_access_service),
+    user: AuthenticatedUser = Depends(require_user),
 ):
+    await access.require_documents(user, [document_id])
     return await service.list_contents(document_id, page=page)
 
 
@@ -122,7 +131,10 @@ async def get_content(
     document_id: int,
     content_id: int,
     service: ViewerService = Depends(get_viewer_service),
+    access: DocumentAccessService = Depends(get_document_access_service),
+    user: AuthenticatedUser = Depends(require_user),
 ):
+    await access.require_documents(user, [document_id])
     return await service.get_content(document_id, content_id)
 
 
