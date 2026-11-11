@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import importlib
+from contextlib import asynccontextmanager
 from typing import Any
 
 
@@ -30,6 +31,11 @@ class PostgresPool:
         if pool is None:
             raise RuntimeError("asyncpg.create_pool returned no pool")
         return cls(pool)
+
+    @asynccontextmanager
+    async def connection(self):
+        async with self._pool.acquire() as connection:
+            yield connection
 
     async def fetch(self, query: str, *args: object):
         return await self._pool.fetch(query, *args)
