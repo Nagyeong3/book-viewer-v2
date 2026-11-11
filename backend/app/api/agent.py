@@ -8,6 +8,10 @@ from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field, field_validator
 
+from app.api.auth import require_user
+from app.application.document_access_service import DocumentAccessService
+from app.core.container import get_document_access_service
+from app.infrastructure.auth.keycloak import AuthenticatedUser
 from app.application.agent_service import AgentService
 from app.application.index_management_service import IndexManagementService
 from app.core.container import get_agent_service, get_index_management_service
@@ -77,7 +81,10 @@ async def query_agent(
     payload: AgentQueryRequest,
     service: AgentService = Depends(get_agent_service),
     index_management: IndexManagementService = Depends(get_index_management_service),
+    access: DocumentAccessService = Depends(get_document_access_service),
+    user: AuthenticatedUser = Depends(require_user),
 ):
+    await access.require_documents(user, payload.document_ids)
     await _require_indexed_documents(payload.document_ids, index_management)
     result = await service.answer(
         payload.question,
@@ -109,7 +116,10 @@ async def stream_agent(
     payload: AgentQueryRequest,
     service: AgentService = Depends(get_agent_service),
     index_management: IndexManagementService = Depends(get_index_management_service),
+    access: DocumentAccessService = Depends(get_document_access_service),
+    user: AuthenticatedUser = Depends(require_user),
 ) -> StreamingResponse:
+    await access.require_documents(user, payload.document_ids)
     await _require_indexed_documents(payload.document_ids, index_management)
 
     async def events() -> AsyncIterator[str]:
