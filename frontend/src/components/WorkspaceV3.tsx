@@ -299,7 +299,7 @@ function SourceDock({ turn, onOpen }: { turn: ChatTurn | undefined; onOpen: (sou
   );
 }
 
-export default function WorkspaceV3() {
+export default function WorkspaceV3({ userId, isAdmin }: { userId: string; isAdmin: boolean }) {
   const [documents, setDocuments] = useState<DocumentSummary[]>([]);
   const [indexStatuses, setIndexStatuses] = useState<Record<number, DocumentIndexStatus>>({});
   const [documentQuery, setDocumentQuery] = useState("");
@@ -346,6 +346,7 @@ export default function WorkspaceV3() {
   const submittingRef = useRef(false);
   const chatLogRef = useRef<HTMLDivElement | null>(null);
   const chatAutoStickRef = useRef(true);
+  const chatStorageReadyRef = useRef(false);
   const translationCacheRef = useRef(new Map<string, string>());
   const translationRequestRef = useRef<string | null>(null);
   const translationPanelRef = useRef<HTMLElement | null>(null);
@@ -354,15 +355,19 @@ export default function WorkspaceV3() {
     try {
       const savedLayout = window.localStorage.getItem(LAYOUT_KEY);
       if (savedLayout) setLayout((current) => ({ ...current, ...JSON.parse(savedLayout) }));
-      const savedChat = window.localStorage.getItem(CHAT_KEY);
+      const savedChat = window.localStorage.getItem(`${CHAT_KEY}:${userId}`);
       if (savedChat) setTurns((JSON.parse(savedChat) as ChatTurn[]).map((turn) => ({ ...turn, pending: false })).slice(-MAX_SAVED_TURNS));
     } catch {
       window.localStorage.removeItem(LAYOUT_KEY);
-      window.localStorage.removeItem(CHAT_KEY);
+      window.localStorage.removeItem(`${CHAT_KEY}:${userId}`);
     }
-  }, []);
+    chatStorageReadyRef.current = true;
+  }, [userId]);
   useEffect(() => { window.localStorage.setItem(LAYOUT_KEY, JSON.stringify(layout)); }, [layout]);
-  useEffect(() => { window.localStorage.setItem(CHAT_KEY, JSON.stringify(turns.map((turn) => ({ ...turn, pending: false })).slice(-MAX_SAVED_TURNS))); }, [turns]);
+  useEffect(() => {
+    if (!chatStorageReadyRef.current) return;
+    window.localStorage.setItem(`${CHAT_KEY}:${userId}`, JSON.stringify(turns.map((turn) => ({ ...turn, pending: false })).slice(-MAX_SAVED_TURNS)));
+  }, [turns, userId]);
 
   useEffect(() => {
     const root = chatLogRef.current;
@@ -374,16 +379,30 @@ export default function WorkspaceV3() {
   }, [turns.length, turns[turns.length - 1]?.answer.length]);
 
   useEffect(() => {
-    api.listDocuments().then((items) => {
-      setDocuments(items);
-      if (items.length) { setSelectedIds([items[0].id]); setActiveDocumentId(items[0].id); }
-    }).catch((error: Error) => setStartupError(error.message));
-  }, []);
+    let cancelled = false;
+    const loadDocuments = async () => {
+      try {
+        const items = await api.listDocuments();
+        if (cancelled) return;
+        setDocuments(items);
+        const allowed = new Set(items.map((item) => item.id));
+        setSelectedIds((current) => current.filter((id) => allowed.has(id)));
+        setActiveDocumentId((current) => current != null && allowed.has(current) ? current : (items[0]?.id ?? null));
+        setStartupError("");
+      } catch (error) {
+        if (!cancelled) setStartupError(error instanceof Error ? error.message : "문서 목록을 불러오지 못했습니다.");
+      }
+    };
+    void loadDocuments();
+    window.addEventListener("book-viewer:document-access-changed", loadDocuments);
+    return () => { cancelled = true; window.removeEventListener("book-viewer:document-access-changed", loadDocuments); };
+  }, [userId]);
 
   useEffect(() => {
     let cancelled = false;
     const refreshStatuses = async () => {
       try {
+        if (!isAdmin) return;
         const statuses = await api.listIndexStatuses();
         if (!cancelled) {
           setIndexStatuses(Object.fromEntries(statuses.map((status) => [status.document_id, status])));
@@ -401,7 +420,7 @@ export default function WorkspaceV3() {
       window.clearInterval(timer);
       window.removeEventListener("book-viewer:index-status-changed", onChanged);
     };
-  }, []);
+  }, [isAdmin]);
 
   useEffect(() => {
     if (!activeDocumentId) return;
@@ -410,6 +429,9 @@ export default function WorkspaceV3() {
     setPageSize(pageSizeCache.get(activeDocumentId) ?? DEFAULT_PAGE_SIZE);
     setPageSizeError("");
     setActiveTocId(null);
+    setToc([]);
+    setPageContents({});
+    setChapter(null);
     setTranslationPanel(null);
     api.getToc(activeDocumentId).then((items) => {
       if (cancelled) return;
@@ -886,7 +908,7 @@ export default function WorkspaceV3() {
       <header className="topbar product-topbar"><div className="brand-block"><span className="brand-mark" aria-hidden="true">B</span><span className="brand-copy"><strong>기술문서 AI Viewer</strong><small>{activeDocument?.title ?? "문서를 선택하세요"}</small></span></div><div className="topbar-actions">{chapter ? <span className="chapter-pill"><span>현재 위치</span>{chapter.title} · p.{activePage ?? chapter.startPage}</span> : null}<div className="scope-search-control"><UiIcon name="search" size={13} /><input value={scopeSearchQuery} onChange={(event) => setScopeSearchQuery(event.target.value)} placeholder={selectedIds.length ? "선택 문서 검색" : "검색 문서를 선택하세요"} disabled={!selectedIds.length} />{scopeSearchQuery.trim().length >= 2 ? <div className="scope-search-results">{scopeSearchResults.length ? scopeSearchResults.map((result) => <button key={`${result.document.id}-${result.item.id}`} type="button" onClick={() => openScopeSearchResult(result)}><span><strong>{result.item.text?.replace(/<[^>]*>/g, "").slice(0, 72) || `Content #${result.item.id}`}</strong><small>{result.document.title}</small></span><em>p.{result.item.page ?? "-"}</em></button>) : <div className="scope-search-empty">선택한 문서에서 결과를 찾지 못했습니다.</div>}</div> : null}</div><span className="topbar-index-slot" /></div></header>
       {startupError ? <div className="global-error">{startupError}</div> : null}
       <section className="workspace-grid" style={gridStyle}>
-        <aside className={`document-pane panel ${layout.tocCollapsed ? "collapsed" : ""}`}><div className="panel-heading compact-heading"><div><span className="panel-eyebrow">LIBRARY</span><h2>문서 탐색</h2><p>열람 문서와 AI 검색 범위를 관리합니다.</p></div><button type="button" className="icon-button icon-button-back" aria-label="목차 접기" title="목차 접기" onClick={() => setLayout((current) => ({ ...current, tocCollapsed: true }))}><UiIcon name="chevron" size={13} /></button></div><div className="document-picker polished-picker"><input className="document-search" value={documentQuery} onChange={(event) => setDocumentQuery(event.target.value)} placeholder="문서명 또는 ID 검색" /><div className="scope-toolbar"><div><strong>AI 검색 범위</strong><span>{selectedIds.length}개 문서 선택</span></div><div><button type="button" onClick={selectAllDocuments} disabled={selectedIds.length === documents.length && documents.length > 0}>전체 선택</button><button type="button" onClick={clearDocumentScope} disabled={!selectedIds.length}>전체 해제</button></div></div><div className="document-list document-list-large">{filteredDocuments.map((document) => { const selected = selectedIds.includes(document.id); const active = activeDocumentId === document.id; const indexStatus = indexStatuses[document.id]; const ready = indexStatus?.state === "ready"; const running = indexStatus?.state === "queued" || indexStatus?.state === "indexing"; return <div key={document.id} className={`document-list-row ${active ? "active-row" : ""}`}><button type="button" className={`scope-checkbox ${selected ? "checked" : ""}`} aria-pressed={selected} aria-label={`${document.title} AI 검색 범위 ${selected ? "제외" : "포함"}`} onClick={() => toggleDocumentScope(document.id)}><span className="checkbox-mark">{selected ? "✓" : ""}</span></button><button type="button" className={`document-item ${active ? "active" : ""}`} onClick={() => openDocument(document.id)}><span className="document-copy"><span className="document-title-line"><strong>{document.title}</strong><span className={`document-index-badge ${ready ? "ready" : running ? "running" : "missing"}`}>{ready ? "RAG 준비" : running ? "구축 중" : "DB 미구축"}</span></span><small>Document #{document.id}{active ? " · 현재 열림" : ""}</small></span></button></div>; })}</div></div><div className="toc-section"><div className="section-label">목차</div>{toc.length ? <TocTree nodes={toc} activeTocId={activeTocId} expandedIds={expandedTocIds} onPick={openToc} onToggle={toggleToc} /> : <div className="muted">목차 없음</div>}</div></aside>
+        <aside className={`document-pane panel ${layout.tocCollapsed ? "collapsed" : ""}`}><div className="panel-heading compact-heading"><div><span className="panel-eyebrow">LIBRARY</span><h2>문서 탐색</h2><p>열람 문서와 AI 검색 범위를 관리합니다.</p></div><button type="button" className="icon-button icon-button-back" aria-label="목차 접기" title="목차 접기" onClick={() => setLayout((current) => ({ ...current, tocCollapsed: true }))}><UiIcon name="chevron" size={13} /></button></div><div className="document-picker polished-picker"><input className="document-search" value={documentQuery} onChange={(event) => setDocumentQuery(event.target.value)} placeholder="문서명 또는 ID 검색" /><div className="scope-toolbar"><div><strong>AI 검색 범위</strong><span>{selectedIds.length}개 문서 선택</span></div><div><button type="button" onClick={selectAllDocuments} disabled={selectedIds.length === documents.length && documents.length > 0}>전체 선택</button><button type="button" onClick={clearDocumentScope} disabled={!selectedIds.length}>전체 해제</button></div></div><div className="document-list document-list-large">{filteredDocuments.map((document) => { const selected = selectedIds.includes(document.id); const active = activeDocumentId === document.id; const indexStatus = indexStatuses[document.id]; const ready = indexStatus?.state === "ready"; const running = indexStatus?.state === "queued" || indexStatus?.state === "indexing"; return <div key={document.id} className={`document-list-row ${active ? "active-row" : ""}`}><button type="button" className={`scope-checkbox ${selected ? "checked" : ""}`} aria-pressed={selected} aria-label={`${document.title} AI 검색 범위 ${selected ? "제외" : "포함"}`} onClick={() => toggleDocumentScope(document.id)}><span className="checkbox-mark">{selected ? "✓" : ""}</span></button><button type="button" className={`document-item ${active ? "active" : ""}`} onClick={() => openDocument(document.id)}><span className="document-copy"><span className="document-title-line"><strong>{document.title}</strong>{isAdmin ? <span className={`document-index-badge ${ready ? "ready" : running ? "running" : "missing"}`}>{ready ? "RAG 준비" : running ? "구축 중" : "DB 미구축"}</span> : null}</span><small>Document #{document.id}{active ? " · 현재 열림" : ""}</small></span></button></div>; })}</div></div><div className="toc-section"><div className="section-label">목차</div>{toc.length ? <TocTree nodes={toc} activeTocId={activeTocId} expandedIds={expandedTocIds} onPick={openToc} onToggle={toggleToc} /> : <div className="muted">목차 없음</div>}</div></aside>
         <div className={`resize-handle toc-resize-handle ${layout.tocCollapsed ? "hidden" : ""}`} onPointerDown={(event) => beginResize("toc", event)} />
         <section className="viewer-pane panel chapter-viewer-panel"><div className="panel-heading viewer-heading sticky-viewer-heading"><div className="viewer-heading-main"><button type="button" className="viewer-menu-button" aria-label={layout.tocCollapsed ? "목차 열기" : "목차 닫기"} title={layout.tocCollapsed ? "목차 열기" : "목차 닫기"} onClick={() => setLayout((current) => ({ ...current, tocCollapsed: !current.tocCollapsed }))}><span /><span /><span /></button><div><span className="panel-eyebrow">DOCUMENT VIEWER</span><h2>{activeDocument?.title ?? "문서 선택"}</h2><p>{chapter ? `${chapter.title} · p.${chapter.startPage}–${chapter.endPage}` : "챕터를 불러오는 중"}</p></div></div><div className="viewer-toolbar">
           <div className="translate-controls full-translate-controls">
