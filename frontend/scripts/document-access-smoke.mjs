@@ -20,7 +20,7 @@ try {
     await adminButton.click();
     const modal = page.getByRole("dialog", { name: "문서 접근 권한 관리" });
     await modal.waitFor({ state: "visible" });
-    await page.getByRole("button", { name: /LAH 정비교범 샘플/ }).waitFor({ state: "visible" });
+    await page.locator(".document-access-list button").filter({ hasText: "LAH 정비교범 샘플" }).first().waitFor({ state: "visible" });
     const metrics = await page.evaluate(() => {
       const dialog = document.querySelector(".document-access-dialog");
       const footer = document.querySelector(".document-access-footer");
