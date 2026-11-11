@@ -76,6 +76,9 @@ try {
 
   const roleSelect = page.getByLabel("프로토타입 사용자 권한");
   await roleSelect.selectOption("user");
+  // Role changes are rendered asynchronously by React. Assert after the UI settles.
+  await adminButton.waitFor({ state: "detached", timeout: 10000 });
+  await page.getByRole("button", { name: /벡터 DB/ }).waitFor({ state: "detached", timeout: 10000 });
   assert(await adminButton.count() === 0, "Regular users must not see document access admin controls.");
   assert(await page.getByRole("button", { name: /벡터 DB/ }).count() === 0, "Regular users must not see vector DB controls.");
   console.log("Document access responsive smoke passed: 1600/1366/768/375 and admin/user roles.");
