@@ -65,7 +65,7 @@ export default function DocumentAccessPanel() {
     || JSON.stringify(users) !== JSON.stringify(selected?.users));
 
   async function save() {
-    if (!selected || saving || !changed) return;
+    if (!selected || loading || saving || !changed) return;
     if (groups.some((group) => !group.startsWith("/"))) {
       setError("그룹은 /teams/... 형식의 Keycloak 전체 경로로 입력하세요.");
       return;
@@ -88,7 +88,7 @@ export default function DocumentAccessPanel() {
   return (
     <>
       {target ? createPortal(
-        <button type="button" className="document-access-launch" aria-label="문서 권한관리" onClick={() => setOpen(true)} title="사용자·그룹별 문서 접근 권한 관리">
+        <button type="button" className="document-access-launch" aria-label="문서 권한관리" onClick={() => { setLoading(true); setOpen(true); }} title="사용자·그룹별 문서 접근 권한 관리">
           <span aria-hidden="true">▤</span><span>문서 권한관리</span>
         </button>, target
       ) : null}
@@ -110,7 +110,7 @@ export default function DocumentAccessPanel() {
                   {filtered.map((item) => (
                     <button key={item.document_id} type="button"
                       className={selectedId === item.document_id ? "selected" : ""}
-                      onClick={() => {
+                      disabled={loading} onClick={() => {
                         if (changed && !window.confirm("저장하지 않은 변경사항이 있습니다. 다른 문서로 이동할까요?")) return;
                         setSelectedId(item.document_id); setError(""); setNotice("");
                       }}>
@@ -127,11 +127,11 @@ export default function DocumentAccessPanel() {
                   <div className="document-access-selected"><small>선택 문서 · #{selected.document_id}</small><strong>{selected.title}</strong></div>
                   <label htmlFor="document-access-groups">접근 허용 그룹</label>
                   <p>Keycloak 그룹 전체 경로를 한 줄에 하나씩 입력하세요.</p>
-                  <textarea id="document-access-groups" value={groupText} onChange={(event) => setGroupText(event.target.value)}
+                  <textarea id="document-access-groups" disabled={loading || saving} value={groupText} onChange={(event) => setGroupText(event.target.value)}
                     placeholder={"/teams/ips-260703-test\n/teams/example-group"} rows={4}/>
                   <label htmlFor="document-access-users">추가 허용 사용자</label>
                   <p>사용자명 대신 Keycloak 사용자 고유 ID(sub)를 사용합니다.</p>
-                  <textarea id="document-access-users" value={userText} onChange={(event) => setUserText(event.target.value)}
+                  <textarea id="document-access-users" disabled={loading || saving} value={userText} onChange={(event) => setUserText(event.target.value)}
                     placeholder="Keycloak 사용자 ID (한 줄에 하나)" rows={4}/>
                   <div className="document-access-policy">
                     <strong>현재 입력된 허용 대상</strong>
@@ -146,7 +146,7 @@ export default function DocumentAccessPanel() {
                 : notice ? <span className="document-access-success">{notice}</span>
                 : <span>권한 변경은 저장 시 적용됩니다.</span>}</div>
               <button type="button" className="document-access-cancel" onClick={() => setOpen(false)} disabled={saving}>닫기</button>
-              <button type="button" className="document-access-save" onClick={() => void save()} disabled={!changed || saving || !selected}>
+              <button type="button" className="document-access-save" onClick={() => void save()} disabled={!changed || loading || saving || !selected}>
                 {saving ? "저장 중..." : "권한 저장"}
               </button>
             </footer>
