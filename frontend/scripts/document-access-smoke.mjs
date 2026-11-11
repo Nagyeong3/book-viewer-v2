@@ -15,7 +15,7 @@ try {
   const adminButton = page.getByRole("button", { name: "문서 권한관리" });
   await adminButton.waitFor({ state: "visible", timeout: 15_000 });
 
-  for (const [width, height] of [[1600, 1000], [1366, 768], [768, 900], [375, 667]]) {
+  for (const [width, height] of [[1920, 1080], [1600, 1000], [1366, 768], [768, 900], [375, 667], [320, 568]]) {
     await page.setViewportSize({ width, height });
     await adminButton.click();
     const modal = page.getByRole("dialog", { name: "문서 접근 권한 관리" });
@@ -81,7 +81,7 @@ try {
   await page.getByRole("button", { name: /벡터 DB/ }).waitFor({ state: "detached", timeout: 10000 });
   assert(await adminButton.count() === 0, "Regular users must not see document access admin controls.");
   assert(await page.getByRole("button", { name: /벡터 DB/ }).count() === 0, "Regular users must not see vector DB controls.");
-  console.log("Document access responsive smoke passed: 1600/1366/768/375 and admin/user roles.");
+  console.log("Document access responsive smoke passed: 1920/1600/1366/768/375/320 and admin/user roles.");
 } finally {
   await browser.close();
 }
