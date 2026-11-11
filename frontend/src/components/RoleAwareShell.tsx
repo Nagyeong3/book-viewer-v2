@@ -102,6 +102,7 @@ export default function RoleAwareShell() {
       } catch (error) {
         if (cancelled) return;
         const message = error instanceof Error ? error.message : String(error);
+        console.error("[auth/me] 사용자 인증 상태 확인 실패:", error);
         if (message.includes("HTTP 403")) {
           setAuthState("denied");
           setAuthMessage("이 계정은 Book Viewer 사용 그룹에 등록되어 있지 않습니다.");
@@ -110,7 +111,7 @@ export default function RoleAwareShell() {
           setAuthMessage("로그인 세션이 만료되었거나 인증에 실패했습니다. 다시 로그인해 주세요.");
         } else {
           setAuthState("error");
-          setAuthMessage("인증 서버에 연결할 수 없습니다. 서버 및 네트워크 상태를 확인하고 다시 시도해 주세요.");
+          setAuthMessage("사용자 인증 상태를 확인하지 못했습니다. API 서버 연결 및 CORS 설정을 확인한 후 다시 시도해 주세요.");
         }
       }
     };
@@ -157,7 +158,7 @@ export default function RoleAwareShell() {
         description={authMessage || "잠시 후 다시 시도하세요."}
         action={
           <div className="auth-state-actions">
-            <button className="auth-primary-button" type="button" onClick={() => void logout()}>다른 계정으로 로그인</button>
+            <button className="auth-primary-button" type="button" onClick={() => void switchAccount()}>다른 계정으로 로그인</button>
             <button type="button" onClick={() => window.location.reload()}>다시 시도</button>
           </div>
         }
