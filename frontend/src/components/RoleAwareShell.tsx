@@ -7,6 +7,7 @@ import { getValidAccessToken, isKeycloakMode, logout, switchAccount } from "../l
 import { api } from "../lib/api";
 import { hasPermission, sessionForRole, SessionUser, UserRole } from "../lib/session";
 import IndexManagementPanel from "./IndexManagementPanel";
+import DocumentAccessPanel from "./DocumentAccessPanel";
 import ProductToolbar from "./ProductToolbar";
 import WorkspaceV3 from "./WorkspaceV3";
 
@@ -166,9 +167,10 @@ export default function RoleAwareShell() {
 
   return (
     <>
-      <WorkspaceV3 />
+      <WorkspaceV3 userId={session?.id ?? "mock-admin"} isAdmin={role === "admin"} />
       <ProductToolbar />
       {canManageIndex ? <IndexManagementPanel /> : null}
+      {canManageIndex ? <DocumentAccessPanel /> : null}
       {portalTarget ? createPortal(
         keycloakMode && session
           ? <SignedInUser user={session} />
