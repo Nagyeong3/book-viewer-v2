@@ -57,3 +57,22 @@ def test_policy_update_rejects_unqualified_group_paths():
     with pytest.raises(ValueError):
         PolicyUpdate(groups=["teams/ips"], users=[])
     assert PolicyUpdate(groups=[" /teams/ips ", "/teams/ips"], users=[]).groups == ["/teams/ips"]
+
+
+def test_admin_policy_put_cors_preflight():
+    from fastapi.testclient import TestClient
+    from app.core.config import Settings
+    from app.main import create_app
+
+    app = create_app(Settings(app_env="test", cors_allowed_origins="http://example.test"))
+    with TestClient(app) as client:
+        response = client.options(
+            "/api/document-access/101",
+            headers={
+                "Origin": "http://example.test",
+                "Access-Control-Request-Method": "PUT",
+                "Access-Control-Request-Headers": "authorization,content-type",
+            },
+        )
+    assert response.status_code == 200
+    assert response.headers["access-control-allow-origin"] == "http://example.test"
