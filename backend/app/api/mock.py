@@ -486,3 +486,30 @@ async def mock_asset(path: str) -> Response:
         <text x="625" y="1685" text-anchor="middle" font-size="24" font-family="sans-serif" fill="#9aa3b1">Mock document page</text>
         </svg>"""
     return Response(content=svg, media_type="image/svg+xml")
+
+
+# Administrator document access editor preview data for UI smoke tests.
+MOCK_POLICIES: dict[int, dict[str, list[str]]] = {
+    101: {"groups": ["/teams/ips-260703-test"], "users": []},
+    102: {"groups": [], "users": []},
+}
+
+
+@router.get("/api/document-access")
+async def mock_list_access():
+    return [
+        {"document_id": document["id"], "title": document["title"],
+         "groups": MOCK_POLICIES[document["id"]]["groups"],
+         "users": MOCK_POLICIES[document["id"]]["users"]}
+        for document in DOCUMENTS
+    ]
+
+
+@router.put("/api/document-access/{document_id}")
+async def mock_update_access(document_id: int, payload: dict[str, list[str]]):
+    document = _document(document_id)
+    MOCK_POLICIES[document_id] = {
+        "groups": sorted(set(payload.get("groups", []))),
+        "users": sorted(set(payload.get("users", []))),
+    }
+    return {"document_id": document_id, "title": document["title"], **MOCK_POLICIES[document_id]}
