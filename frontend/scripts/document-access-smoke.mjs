@@ -62,6 +62,12 @@ try {
   await page.getByText("접근 권한이 저장되었습니다.", { exact: false }).waitFor({ state: "visible" });
   await page.getByRole("button", { name: "닫기" }).last().click();
   await adminButton.click();
+  // Reopening triggers an asynchronous GET; verify persisted values after hydration.
+  await page.waitForFunction(() => {
+    const group = document.querySelector("#document-access-groups");
+    const user = document.querySelector("#document-access-users");
+    return group?.value.includes("/teams/ate-example") && user?.value.includes("test-keycloak-sub");
+  }, null, { timeout: 10000 });
   assert((await page.getByLabel("접근 허용 그룹").inputValue()).includes("/teams/ate-example"), "Saved group policy not restored.");
   assert((await page.getByLabel("추가 허용 사용자").inputValue()).includes("test-keycloak-sub"), "Saved user policy not restored.");
   await page.getByRole("button", { name: "닫기" }).last().click();
