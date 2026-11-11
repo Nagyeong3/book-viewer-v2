@@ -42,3 +42,29 @@
 .document-access-save:disabled{opacity:.48;cursor:not-allowed}
 @media(max-width:680px){.document-access-backdrop{padding:8px}.document-access-dialog{max-height:calc(100dvh - 16px);border-radius:12px}.document-access-header{padding:15px 16px 12px}.document-access-header h2{font-size:16px}.document-access-body{grid-template-columns:minmax(0,1fr);overflow-y:auto}.document-access-library{min-height:180px;max-height:230px;border-right:0;border-bottom:1px solid #e4e9f1;padding:12px}.document-access-editor{overflow:visible;padding:16px}.document-access-footer{flex-wrap:wrap;padding:11px 12px}.document-access-footer>div{flex:1 0 100%}.document-access-launch{padding:6px 8px}.document-access-launch span:last-child{display:none}}
 @media(max-width:400px){.document-access-header p{font-size:11px}.document-access-footer button{flex:1}}
+
+/* The viewer topbar is dense on phones; reflow controls instead of cropping them. */
+@media(max-width:760px){
+  .workspace-v3 .product-topbar{
+    height:auto;min-height:0;display:flex;flex-direction:column;align-items:stretch;
+    justify-content:flex-start;gap:8px;padding:11px 12px;
+  }
+  .workspace-v3 .brand-block{flex:0 0 auto;min-width:0;max-width:100%}
+  .workspace-v3 .brand-copy{min-width:0}
+  .workspace-v3 .brand-copy strong{font-size:15px}
+  .workspace-v3 .brand-copy small{font-size:10px}
+  .workspace-v3 .topbar-actions{width:100%;min-width:0;max-width:100%;display:flex;flex-wrap:wrap;gap:6px}
+  .workspace-v3 .scope-search-control{flex:1 1 100%;width:100%;max-width:100%;min-width:0;order:0}
+  .workspace-v3 .topbar-index-slot{order:1}
+  .workspace-v3 .document-access-launch{order:2}
+  .workspace-v3 .signed-in-user,.workspace-v3 .prototype-role-switcher{order:3;margin-left:auto;max-width:100%;min-width:0}
+  .workspace-v3 .workspace-grid{display:block!important;width:100%;min-width:0;height:auto}
+  .workspace-v3 .document-pane,.workspace-v3 .viewer-pane,.workspace-v3 .chat-pane{width:100%;min-width:0;max-width:100%}
+  .workspace-v3 .viewer-toolbar{max-width:100%;min-width:0;flex-wrap:wrap}
+}
+@media(max-width:1100px){
+  .document-access-launch span:last-child{display:none}
+  .document-access-launch{width:36px;padding:6px;min-width:36px}
+}
+.workspace-v3 .topbar-actions .document-access-launch,
+.workspace-v3 .topbar-actions .document-access-launch span{color:#27425f!important}
