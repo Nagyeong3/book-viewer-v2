@@ -386,6 +386,7 @@ export default function WorkspaceV3({ userId, isAdmin }: { userId: string; isAdm
         if (cancelled) return;
         setDocuments(items);
         const allowed = new Set(items.map((item) => item.id));
+        setTurns((current) => current.filter((turn) => turn.sources.every((source) => allowed.has(source.document_id))));
         setSelectedIds((current) => { const remaining = current.filter((id) => allowed.has(id)); return remaining.length ? remaining : (items[0] ? [items[0].id] : []); });
         setActiveDocumentId((current) => current != null && allowed.has(current) ? current : (items[0]?.id ?? null));
         setStartupError("");
@@ -430,6 +431,7 @@ export default function WorkspaceV3({ userId, isAdmin }: { userId: string; isAdm
       setActivePage(null);
       setLoadAnchorPage(null);
       setFocusContentId(null);
+      setTranslationPanel(null);
       return;
     }
     let cancelled = false;
