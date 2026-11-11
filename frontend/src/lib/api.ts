@@ -1,6 +1,7 @@
 import { getAuthorizationHeader } from "./auth";
 
 export type DocumentSummary = { id: number; title: string };
+export type DocumentPolicy = { document_id: number; title: string; groups: string[]; users: string[] };
 
 export type TocNode = {
   id: number;
@@ -99,6 +100,9 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
 
 export const api = {
   getCurrentUser: () => request<CurrentUserResponse>("/api/auth/me"),
+  listDocumentPolicies: () => request<DocumentPolicy[]>("/api/document-access"),
+  saveDocumentPolicy: (documentId: number, policy: Pick<DocumentPolicy, "groups" | "users">) =>
+    request<DocumentPolicy>(`/api/document-access/${documentId}`, { method: "PUT", body: JSON.stringify(policy) }),
   listDocuments: () => request<DocumentSummary[]>("/api/documents"),
   getToc: (documentId: number) => request<TocNode[]>(`/api/documents/${documentId}/toc`),
   listTranslationLanguages: (documentId: number) =>

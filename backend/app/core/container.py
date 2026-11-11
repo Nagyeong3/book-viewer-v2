@@ -2,6 +2,7 @@ from dataclasses import dataclass
 
 from fastapi import Request
 
+from app.application.document_access_service import DocumentAccessService
 from app.application.agent_service import AgentService
 from app.application.context_builder import ContextBuilder
 from app.application.index_management_service import IndexManagementService
@@ -22,6 +23,7 @@ from app.infrastructure.postgres.pool import PostgresPool
 class AppContainer:
     settings: Settings
     auth_provider: KeycloakAuthProvider | None = None
+    document_access_service: DocumentAccessService | None = None
     postgres_pool: PostgresPool | None = None
     viewer_service: ViewerService | None = None
     elasticsearch_client: ElasticsearchClient | None = None
@@ -67,6 +69,7 @@ class AppContainer:
                 command_timeout=settings.database_command_timeout,
             )
             container.postgres_pool = pool
+            container.document_access_service = DocumentAccessService(pool)
             container.viewer_service = ViewerService(PostgresDocumentRepository(pool))
 
         if settings.elasticsearch_url and settings.embedding_base_url:
@@ -158,6 +161,13 @@ def get_container(request: Request) -> AppContainer:
     if not isinstance(container, AppContainer):
         raise RuntimeError("Application container is not initialized")
     return container
+
+
+def get_document_access_service(request: Request) -> DocumentAccessService:
+    container = get_container(request)
+    if container.document_access_service is None:
+        raise RuntimeError("Document access service requires DATABASE_URL")
+    return container.document_access_service
 
 
 def get_viewer_service(request: Request) -> ViewerService:

@@ -2,7 +2,7 @@ from fastapi.testclient import TestClient
 
 from app.application.viewer_service import ViewerService
 from app.core.config import Settings
-from app.core.container import AppContainer
+from app.core.container import AppContainer, get_document_access_service
 from app.main import create_app
 from tests.fakes import FakeDocumentRepository
 
@@ -11,8 +11,18 @@ async def fake_container_factory(settings: Settings) -> AppContainer:
     return AppContainer(settings=settings, viewer_service=ViewerService(FakeDocumentRepository()))
 
 
+class FakeDocumentAccess:
+    async def allowed_document_ids(self, user):
+        return {1, 2}
+
+    async def require_documents(self, user, document_ids):
+        return None
+
+
 def client() -> TestClient:
-    return TestClient(create_app(Settings(app_env="test"), container_factory=fake_container_factory))
+    app = create_app(Settings(app_env="test"), container_factory=fake_container_factory)
+    app.dependency_overrides[get_document_access_service] = lambda: FakeDocumentAccess()
+    return TestClient(app)
 
 
 def test_viewer_endpoints() -> None:

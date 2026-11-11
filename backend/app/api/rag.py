@@ -8,6 +8,10 @@ from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field, field_validator
 
+from app.api.auth import require_user
+from app.application.document_access_service import DocumentAccessService
+from app.core.container import get_document_access_service
+from app.infrastructure.auth.keycloak import AuthenticatedUser
 from app.application.index_management_service import IndexManagementService
 from app.application.rag_service import RagService
 from app.core.container import get_index_management_service, get_rag_service
@@ -72,7 +76,10 @@ async def query_rag(
     payload: RagQueryRequest,
     service: RagService = Depends(get_rag_service),
     index_management: IndexManagementService = Depends(get_index_management_service),
+    access: DocumentAccessService = Depends(get_document_access_service),
+    user: AuthenticatedUser = Depends(require_user),
 ):
+    await access.require_documents(user, payload.document_ids)
     await _require_indexed_documents(payload.document_ids, index_management)
     result = await service.answer(
         payload.question,
@@ -105,7 +112,10 @@ async def stream_rag(
     payload: RagQueryRequest,
     service: RagService = Depends(get_rag_service),
     index_management: IndexManagementService = Depends(get_index_management_service),
+    access: DocumentAccessService = Depends(get_document_access_service),
+    user: AuthenticatedUser = Depends(require_user),
 ) -> StreamingResponse:
+    await access.require_documents(user, payload.document_ids)
     await _require_indexed_documents(payload.document_ids, index_management)
 
     async def events() -> AsyncIterator[str]:

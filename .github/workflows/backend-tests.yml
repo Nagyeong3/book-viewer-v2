@@ -5,9 +5,11 @@ on:
     branches:
       - main
       - "work/**"
+      - "feature/**"
   pull_request:
     branches:
       - main
+      - "work/**"
 
 jobs:
   backend:

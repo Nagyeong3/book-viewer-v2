@@ -7,6 +7,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.agent import router as agent_router
 from app.api.auth import require_admin, require_user, router as auth_router
+from app.api.document_access import router as document_access_router
 from app.api.errors import register_exception_handlers
 from app.api.health import router as health_router
 from app.api.index_management import router as index_management_router
@@ -54,7 +55,7 @@ def create_app(
         CORSMiddleware,
         allow_origins=resolved_settings.cors_origins,
         allow_credentials=False,
-        allow_methods=["GET", "POST", "OPTIONS"],
+        allow_methods=["GET", "POST", "PUT", "OPTIONS"],
         allow_headers=["Authorization", "Content-Type", "X-Request-ID"],
     )
     register_request_middleware(app)
@@ -62,6 +63,8 @@ def create_app(
     app.include_router(health_router)
     app.include_router(readiness_router)
     app.include_router(auth_router)
+    if resolved_settings.app_profile != "mock":
+        app.include_router(document_access_router)
     if resolved_settings.app_profile == "mock":
         app.include_router(mock_router)
     else:
