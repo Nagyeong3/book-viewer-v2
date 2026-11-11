@@ -9,6 +9,7 @@ import "./workspace-v4.css";
 import "./print-v2.css";
 import "./index-management.css";
 import "./access-control.css";
+import "./document-access.css";
 import "./workspace-v5.css";
 
 export const metadata = {
