@@ -33,6 +33,16 @@ try {
         dialog: { left: rect.left, right: rect.right, top: rect.top, bottom: rect.bottom },
         footer: { left: footerRect.left, right: footerRect.right, top: footerRect.top, bottom: footerRect.bottom },
         bodyWidth: body.clientWidth, bodyScrollWidth: body.scrollWidth,
+        overflowing: Array.from(document.querySelectorAll("body *")).filter((element) => {
+          const rect = element.getBoundingClientRect();
+          return rect.width > 0 && (rect.right > innerWidth + 2 || rect.left < -2);
+        }).slice(0, 15).map((element) => ({
+          tag: element.tagName,
+          cls: typeof element.className === "string" ? element.className : "",
+          right: Math.round(element.getBoundingClientRect().right),
+          left: Math.round(element.getBoundingClientRect().left),
+          width: Math.round(element.getBoundingClientRect().width),
+        })),
       };
     });
     assert(metrics.htmlScrollWidth <= width + 2, `Global horizontal overflow at ${width}: ${JSON.stringify(metrics)}`);
