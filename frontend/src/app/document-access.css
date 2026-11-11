@@ -1,0 +1,44 @@
+.document-access-launch{display:inline-flex;align-items:center;justify-content:center;gap:7px;flex:0 0 auto;min-height:34px;padding:6px 11px;border:1px solid #9baec7;border-radius:8px;background:#f5f8ff;color:#263d5b;font-size:11px;font-weight:750;white-space:nowrap}
+.document-access-launch:hover{background:#e9f0fa}
+.document-access-launch span:first-child{font-size:17px;line-height:1}
+.document-access-backdrop{position:fixed;inset:0;z-index:120;display:grid;place-items:center;padding:20px;background:rgba(12,23,40,.58)}
+.document-access-dialog{width:min(940px,100%);max-height:min(800px,calc(100dvh - 40px));min-width:0;display:flex;flex-direction:column;overflow:hidden;border:1px solid #d8e0eb;border-radius:16px;background:#fff;box-shadow:0 24px 80px rgba(6,19,39,.28);color:#223047}
+.document-access-header{display:flex;justify-content:space-between;gap:16px;padding:22px 26px 18px;border-bottom:1px solid #e4e9f1;flex:0 0 auto}
+.document-access-header div{min-width:0}
+.document-access-header small{font-size:10px;font-weight:800;letter-spacing:.12em;color:#59769a}
+.document-access-header h2{font-size:20px;line-height:1.35;margin:6px 0}
+.document-access-header p{font-size:12px;line-height:1.65;color:#687789;margin:0;overflow-wrap:anywhere}
+.document-access-close{flex:0 0 32px;align-self:flex-start;height:32px;border:0;border-radius:7px;background:#f2f5f8;color:#526378;font-size:22px}
+.document-access-body{display:grid;grid-template-columns:minmax(200px,280px) minmax(0,1fr);flex:1;min-height:0;overflow:hidden}
+.document-access-library{display:flex;flex-direction:column;min-height:0;min-width:0;border-right:1px solid #e4e9f1;background:#f8fafc;padding:18px 14px}
+.document-access-library label{display:flex;justify-content:space-between;gap:8px;font-size:12px;font-weight:750;margin-bottom:10px}
+.document-access-library label span{font-size:11px;color:#778497}
+.document-access-library input{width:100%;min-width:0;border:1px solid #cad4e1;border-radius:8px;background:#fff;padding:10px 11px;font-size:12px;color:#223047;outline-offset:2px}
+.document-access-list{display:flex;flex-direction:column;gap:5px;min-height:0;overflow-y:auto;overflow-x:hidden;margin-top:12px}
+.document-access-list button{display:grid;gap:5px;text-align:left;width:100%;min-width:0;border:1px solid transparent;border-radius:9px;padding:11px 10px;color:#2a3a50;background:transparent}
+.document-access-list button:hover{background:#edf3fb}
+.document-access-list button.selected{border-color:#a8bbdb;background:#e9f1fd}
+.document-access-list strong{font-size:12px;overflow-wrap:anywhere;line-height:1.45}
+.document-access-list small{font-size:10px;color:#64758d;overflow-wrap:anywhere}
+.document-access-empty{padding:12px;color:#67768b;font-size:12px;line-height:1.5}
+.document-access-editor{min-width:0;min-height:0;overflow-y:auto;padding:22px 26px 28px;display:flex;flex-direction:column}
+.document-access-selected{display:grid;gap:5px;border:1px solid #dce5f0;border-radius:10px;background:#f7faff;padding:12px 14px;margin-bottom:21px;min-width:0}
+.document-access-selected small{color:#6b7c91;font-size:10px}
+.document-access-selected strong{font-size:14px;line-height:1.45;overflow-wrap:anywhere}
+.document-access-editor label{font-size:12px;font-weight:750;margin-bottom:5px}
+.document-access-editor p{margin:0 0 9px;color:#6a7a8d;font-size:11px;line-height:1.5}
+.document-access-editor textarea{width:100%;min-width:0;max-width:100%;min-height:92px;resize:vertical;border:1px solid #ccd7e4;border-radius:9px;padding:11px 12px;color:#24354a;background:#fff;font-size:12px;line-height:1.6;outline-offset:2px;margin-bottom:18px}
+.document-access-policy{display:grid;gap:6px;padding:12px 14px;border-radius:10px;background:#f2f6fa;border:1px solid #dfe7f0}
+.document-access-policy strong{font-size:11px}
+.document-access-policy span{font-size:12px;color:#284e7a;font-weight:750}
+.document-access-policy small{font-size:11px;color:#67778b;line-height:1.45}
+.document-access-placeholder{display:grid;place-items:center;min-height:200px;font-size:13px;color:#68788a;text-align:center}
+.document-access-footer{display:flex;gap:9px;align-items:center;padding:15px 22px;border-top:1px solid #e2e8f0;flex:0 0 auto}
+.document-access-footer>div{flex:1;min-width:0;font-size:11px;color:#748195;line-height:1.5;overflow-wrap:anywhere}
+.document-access-error{color:#a62e2e}.document-access-success{color:#25643f}
+.document-access-cancel,.document-access-save{flex:0 0 auto;min-height:36px;padding:8px 14px;border-radius:8px;font-size:12px;font-weight:700}
+.document-access-cancel{border:1px solid #cad5e1;background:#fff;color:#3c5067}
+.document-access-save{border:1px solid #1c486f;background:#1c486f;color:white}
+.document-access-save:disabled{opacity:.48;cursor:not-allowed}
+@media(max-width:680px){.document-access-backdrop{padding:8px}.document-access-dialog{max-height:calc(100dvh - 16px);border-radius:12px}.document-access-header{padding:15px 16px 12px}.document-access-header h2{font-size:16px}.document-access-body{grid-template-columns:minmax(0,1fr);overflow-y:auto}.document-access-library{min-height:180px;max-height:230px;border-right:0;border-bottom:1px solid #e4e9f1;padding:12px}.document-access-editor{overflow:visible;padding:16px}.document-access-footer{flex-wrap:wrap;padding:11px 12px}.document-access-footer>div{flex:1 0 100%}.document-access-launch{padding:6px 8px}.document-access-launch span:last-child{display:none}}
+@media(max-width:400px){.document-access-header p{font-size:11px}.document-access-footer button{flex:1}}
