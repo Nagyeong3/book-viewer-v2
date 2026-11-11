@@ -56,6 +56,7 @@ try {
 
   await page.setViewportSize({ width: 1366, height: 768 });
   await adminButton.click();
+  await page.waitForFunction(() => !document.querySelector("#document-access-groups")?.disabled);
   await page.getByLabel("접근 허용 그룹").fill("/teams/ips-260703-test\n/teams/ate-example");
   await page.getByLabel("추가 허용 사용자").fill("test-keycloak-sub");
   await page.getByRole("button", { name: "권한 저장" }).click();
@@ -63,17 +64,12 @@ try {
   await page.getByRole("button", { name: "닫기" }).last().click();
   await adminButton.click();
   // Reopening triggers an asynchronous GET; verify persisted values after hydration.
-  await page.waitForTimeout(600);
-  const fromServer = await (await page.request.get("http://127.0.0.1:9056/api/document-access")).json();
-  console.log("ACL RESTORE DEBUG", JSON.stringify({
-    fromServer, groupValue: await page.getByLabel("접근 허용 그룹").inputValue(),
-    userValue: await page.getByLabel("추가 허용 사용자").inputValue(),
-  }));
+  await page.waitForFunction(() => !document.querySelector("#document-access-groups")?.disabled);
   await page.waitForFunction(() => {
     const group = document.querySelector("#document-access-groups");
     const user = document.querySelector("#document-access-users");
     return group?.value.includes("/teams/ate-example") && user?.value.includes("test-keycloak-sub");
-  }, null, { timeout: 3000 });
+  }, null, { timeout: 10000 });
   assert((await page.getByLabel("접근 허용 그룹").inputValue()).includes("/teams/ate-example"), "Saved group policy not restored.");
   assert((await page.getByLabel("추가 허용 사용자").inputValue()).includes("test-keycloak-sub"), "Saved user policy not restored.");
   await page.getByRole("button", { name: "닫기" }).last().click();
