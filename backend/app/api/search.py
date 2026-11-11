@@ -3,6 +3,10 @@ from __future__ import annotations
 from fastapi import APIRouter, Depends
 from pydantic import BaseModel, Field, field_validator
 
+from app.api.auth import require_user
+from app.application.document_access_service import DocumentAccessService
+from app.core.container import get_document_access_service
+from app.infrastructure.auth.keycloak import AuthenticatedUser
 from app.application.retrieval_service import RetrievalService
 from app.core.container import get_retrieval_service
 from app.domain.models.rag import RetrievalMode
@@ -42,7 +46,10 @@ class SearchHitResponse(BaseModel):
 async def search(
     payload: SearchRequest,
     service: RetrievalService = Depends(get_retrieval_service),
+    access: DocumentAccessService = Depends(get_document_access_service),
+    user: AuthenticatedUser = Depends(require_user),
 ):
+    await access.require_documents(user, payload.document_ids)
     hits = await service.search(
         payload.query,
         payload.document_ids,
