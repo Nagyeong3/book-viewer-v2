@@ -4,6 +4,10 @@ from fastapi import APIRouter, Depends, Query
 from fastapi.responses import RedirectResponse
 from pydantic import BaseModel, ConfigDict
 
+from app.api.auth import require_user
+from app.application.document_access_service import DocumentAccessService
+from app.core.container import get_document_access_service
+from app.infrastructure.auth.keycloak import AuthenticatedUser
 from app.application.viewer_service import ViewerService
 from app.core.config import Settings, get_settings
 from app.core.container import get_viewer_service
@@ -68,12 +72,23 @@ def _resolve_page_image_url(path: str, filer_url: str | None) -> str:
 
 
 @router.get("", response_model=list[DocumentResponse])
-async def list_documents(service: ViewerService = Depends(get_viewer_service)):
-    return await service.list_documents()
+async def list_documents(
+    service: ViewerService = Depends(get_viewer_service),
+    access: DocumentAccessService = Depends(get_document_access_service),
+    user: AuthenticatedUser = Depends(require_user),
+):
+    allowed = await access.allowed_document_ids(user)
+    return [document for document in await service.list_documents() if document.id in allowed]
 
 
 @router.get("/{document_id}", response_model=DocumentResponse)
-async def get_document(document_id: int, service: ViewerService = Depends(get_viewer_service)):
+async def get_document(
+    document_id: int,
+    service: ViewerService = Depends(get_viewer_service),
+    access: DocumentAccessService = Depends(get_document_access_service),
+    user: AuthenticatedUser = Depends(require_user),
+):
+    await access.require_documents(user, [document_id])
     return await service.get_document(document_id)
 
 
@@ -86,7 +101,10 @@ async def get_toc(document_id: int, service: ViewerService = Depends(get_viewer_
 async def list_translation_languages(
     document_id: int,
     service: ViewerService = Depends(get_viewer_service),
+    access: DocumentAccessService = Depends(get_document_access_service),
+    user: AuthenticatedUser = Depends(require_user),
 ):
+    await access.require_documents(user, [document_id])
     return await service.list_translation_languages(document_id)
 
 
@@ -114,7 +132,10 @@ async def get_page_image(
     page: int,
     service: ViewerService = Depends(get_viewer_service),
     settings: Settings = Depends(get_settings),
+    access: DocumentAccessService = Depends(get_document_access_service),
+    user: AuthenticatedUser = Depends(require_user),
 ):
+    await access.require_documents(user, [document_id])
     path = await service.get_page_image_path(document_id, page)
     target = _resolve_page_image_url(path, settings.seaweedfs_filer_url)
     return RedirectResponse(target, status_code=307)
