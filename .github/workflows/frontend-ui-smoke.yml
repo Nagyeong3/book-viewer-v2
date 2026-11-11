@@ -4,10 +4,14 @@ on:
   push:
     branches:
       - "work/**"
+      - "feature/**"
     paths:
       - "frontend/**"
       - "backend/app/api/mock.py"
       - ".github/workflows/frontend-ui-smoke.yml"
+  pull_request:
+    branches:
+      - "work/**"
   workflow_dispatch:
 
 jobs:
@@ -94,6 +98,12 @@ jobs:
         env:
           UI_BASE_URL: http://127.0.0.1:3000
         run: node scripts/role-smoke.mjs
+
+      - name: Run document access responsive UI smoke
+        working-directory: frontend
+        env:
+          UI_BASE_URL: http://127.0.0.1:3000
+        run: node scripts/document-access-smoke.mjs
 
       - name: Upload UI evidence
         if: always()
