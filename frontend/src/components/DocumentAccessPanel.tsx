@@ -57,7 +57,6 @@ export default function DocumentAccessPanel() {
   useEffect(() => {
     setGroupText(selected?.groups.join("\n") ?? "");
     setUserText(selected?.users.join("\n") ?? "");
-    setNotice("");
   }, [selectedId, selected?.groups, selected?.users]);
 
   const groups = entries(groupText);
@@ -89,7 +88,7 @@ export default function DocumentAccessPanel() {
   return (
     <>
       {target ? createPortal(
-        <button type="button" className="document-access-launch" onClick={() => setOpen(true)} title="사용자·그룹별 문서 접근 권한 관리">
+        <button type="button" className="document-access-launch" aria-label="문서 권한관리" onClick={() => setOpen(true)} title="사용자·그룹별 문서 접근 권한 관리">
           <span aria-hidden="true">▤</span><span>문서 권한관리</span>
         </button>, target
       ) : null}
@@ -113,7 +112,7 @@ export default function DocumentAccessPanel() {
                       className={selectedId === item.document_id ? "selected" : ""}
                       onClick={() => {
                         if (changed && !window.confirm("저장하지 않은 변경사항이 있습니다. 다른 문서로 이동할까요?")) return;
-                        setSelectedId(item.document_id); setError("");
+                        setSelectedId(item.document_id); setError(""); setNotice("");
                       }}>
                       <strong title={item.title}>{item.title}</strong>
                       <small>#{item.document_id} · 그룹 {item.groups.length} · 개인 {item.users.length}</small>
